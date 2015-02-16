@@ -1,9 +1,10 @@
-d3b80e1fc720250f32dd1ba331bd2f6d *DESCRIPTION
-b35dc9ed4d7cdcba6d6afc2d111e5e07 *NAMESPACE
+bebeb63be03207de6ead5e43aaf9e180 *DESCRIPTION
+4e2fc6ceac59f014ef6c550ec2a14c64 *NAMESPACE
+8d9162ab30b127b1cf3849e2d0d9fe96 *NEWS
 744b0233bed9e64a833725d5b351fac3 *R/AnnotatedOutline.R
 753641ae16d5a2ccaa63afd83c8e2071 *R/Dataset.R
 a834f6424d280ab3ecdff87c70367c6d *R/Outline.R
-15ac17e68642ecb5e0bae7bdd6afd7f6 *R/ReconstructedDataset.R
+ac01c987b4f64b60f12dd63dfdb8711d *R/ReconstructedDataset.R
 c9b622687160636e8387813c5ee60ea7 *R/ReconstructedOutline.R
 2be88257eeaf6db8d7547efe71044f0e *R/RetinalDataset.R
 04228b22051b7bb3c197deb140cc7fcc *R/RetinalReconstructedDataset.R
@@ -16,7 +17,7 @@ aa7e1a5e257617195ffbfba007064a9c *R/format-common.R
 9df61c79b4618dca871c848f13ceb39e *R/format-idt.R
 0c65aa77f0e8e150bb71a1d01ef9bed4 *R/format-ijroi.R
 001301dfe2ae0fcd3835db663dfce2ac *R/generics.R
-47cfa5a5ec21ca46e081b91995434caf *R/geometry.R
+84c32cb0c342ffc5161a9988a630774b *R/geometry.R
 7761c571cba36c8cfdd9bb6930046948 *R/kernel-density.R
 eaba50f55f58f3e16c8e6ca2f2a72d76 *R/misc.R
 714e4f5c231498a494b72575b0ad930e *R/plots.R
@@ -25,7 +26,7 @@ d24fa0c8d2216906d6b6fbd891ad929a *R/retistruct-batch.R
 29e5b82549893e62fc39ca5c8bfef50a *R/retistruct-cli.R
 c4d4f25cbbe658a4078de7c9b4fae9fa *R/retistruct-gui.R
 8cb83eb36b56c2071011396885f0f5db *R/retistruct.R
-f86e14f0e01f472445effe36deee174e *R/revision.R
+fcfd52a94f66efa5aff741e657e94ad9 *R/revision.R
 0226131ee9d390f686025ce6f794a473 *R/spheristruct.R
 3110f71f579e615799181cf4ef357023 *R/transformations.R
 cba6b88e55827bf24f79bfb81ec61f61 *R/zzz.R
@@ -36,7 +37,7 @@ b14c73c6b7edf06e99809694efdadb8f *demo/retistruct.method.R
 194b92306824c9905a75c980ddcc9cf2 *demo/retistruct.titrate.R
 4633dc4368772dc8f259d0e6e056c268 *demo/smi32.R
 8b7e3b646f8afc3770fa910ed5d00945 *demo/wedge.R
-04a36f24cfb5cc1763deb4caa2555e6d *inst/CITATION
+34d7ca629543f848a08b3f4d8a6455c5 *inst/CITATION
 96397ec68f33160808374b41883135f7 *inst/extdata/GM114-4-RC/ALU.MAP
 29a5a2a6c68cc96deb9ac5b0d04dc6ff *inst/extdata/GM114-4-RC/P.csv
 f1c3a166b273d69481131f30a1181ddc *inst/extdata/GM114-4-RC/SYS.SYS
@@ -206,7 +207,7 @@ cc368f14bdf6e6d4ecedff1765da3a24 *man/retistruct.batch.get.titrations.Rd
 04331fe6b7fea18bd74adcf3d0ed3a61 *man/retistruct.cli.figure.Rd
 e9286455a546ab305e58cb86d7830488 *man/retistruct.cli.process.Rd
 b16c08baaa7a626d8c8ff31c0a270bf0 *man/retistruct.export.matlab.Rd
-37a03da87c7a5ea710849ebb3b213642 *man/retistruct.global.revision.Rd
+a4cf8260ac14e1151f7fd493ccf476fd *man/retistruct.global.revision.Rd
 2a6f2955d322ed0d57928f3a184f6ae3 *man/retistruct.potential.od.Rd
 3012d2028477c563b90036f5474ca7cf *man/retistruct.read.dataset.Rd
 9f2e2fc1367508bb00eeee460edcb20b *man/retistruct.read.markup.Rd

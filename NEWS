@@ -1,0 +1,15 @@
+CHANGES IN VERSION 0.5.10 - Released 2015/02/16
+
+CODE IMPROVEMENTS
+
+* retistruct:::bary.to.sphere.cart() and
+  retistruct:::sphere.cart.to.sphere.spherical() are exported.
+  (https://github.com/davidcsterratt/retistruct/issues/2) 
+  Thanks to Brian Cohn for the request.
+
+BUG FIXES
+
+* The message produced by delaunayn() in geometry package 0.3-5 has
+  been suppressed.
+  https://github.com/davidcsterratt/retistruct/issues/3
+  Thanks to Brian Cohn for the report.
