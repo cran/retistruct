@@ -82,7 +82,7 @@ retistruct.cli.basepath <- function(dataset) {
   return(basepath)
 }
 
-##' @title Print a figure to file
+##' Print a figure to file
 ##' @param dataset Path to dataset to process 
 ##' @param outputdir Directory in which to save any figures
 ##' @param device String representing device to print figures to
@@ -91,6 +91,7 @@ retistruct.cli.basepath <- function(dataset) {
 ##' @param res Resolution of figures in dpi (only applies to bitmap
 ##' devices)
 ##' @export
+##' @importFrom graphics par title
 ##' @author David Sterratt
 retistruct.cli.figure <- function(dataset,
                                   outputdir, device="pdf", width=6, height=6,
@@ -103,10 +104,10 @@ retistruct.cli.figure <- function(dataset,
   }
   suffix <- paste(".", device, sep="")
   dev <- switch(device,
-                pdf=pdf,
-                png=png,
-                jpeg=jpeg,
-                tiff=tiff)
+                pdf=grDevices::pdf,
+                png=grDevices::png,
+                jpeg=grDevices::jpeg,
+                tiff=grDevices::tiff)
   if (is.null(dev)) {
     stop(paste("Device", device, "is not supported"))
   }

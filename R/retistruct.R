@@ -1,14 +1,9 @@
 ## Global variables
-##' @title Version of reconstruction file data format
+##' Version of reconstruction file data format
 ##' @export
 recfile.version <- 5      # Version of reconstruction file data format
 
-## Report function, with similar arguments to print
-retistruct.report <- function(message, title="",...) {
-  cat(paste(message, "\n", sep=""))
-}
-
-##' @title Check the whether  directory contains valid data 
+##' Check the whether  directory contains valid data 
 ##' @param dir Diectory to check.
 ##' @return  \code{TRUE} if \code{dir} contains valid data;
 ##' \code{FALSE} otherwise.
@@ -28,11 +23,12 @@ checkDatadir <- function(dir=NULL) {
 ##' the files in the directory.
 ##' 
 ##' @title Read a retinal dataset
-##' @param dataset Path to directory containing as SYS and MAP file
-##' @param ... Parameters passed to the format-specific functions. 
+##' @param dataset Path to directory containing the files
+##'   corresponding to each format.
+##' @param ... Parameters passed to the format-specific functions.
 ##' @return An object that of classes \code{\link{RetinalDataset}} and
-##' \code{\link{RetinalDataset}}. There may be extra fields too,
-##' depending on the format.
+##'   \code{\link{RetinalDataset}}. There may be extra fields too,
+##'   depending on the format.
 ##' @author David Sterratt
 ##' @export
 retistruct.read.dataset <- function(dataset, ...) {
@@ -64,7 +60,7 @@ retistruct.potential.od <- function(o) {
 
 ##' Read the markup data contained in the files \file{markup.csv},
 ##' \file{P.csv} and \file{T.csv} in the directory \file{dataset},
-##' which is specified in the reconstruction object \code{r}. 
+##' which is specified in the reconstruction object \code{r}.
 ##'
 ##' The tear information is contained in the files \file{P.csv} and
 ##' \file{T.csv}. The first file contains the locations of outline
@@ -94,6 +90,7 @@ retistruct.potential.od <- function(o) {
 ##' \item{phi0}{Angle of rim in degrees}
 ##' \item{DVflip}{Boolean variable indicating if DV axis has been flipped}
 ##' @author David Sterratt
+##' @importFrom utils read.csv 
 ##' @export
 retistruct.read.markup <- function(a, error=stop) {
   ## Return index in P of closest point to x
@@ -153,7 +150,7 @@ retistruct.read.markup <- function(a, error=stop) {
       a$DVflip <- M["DVflip"]
     }
   } else {
-    error("Markup file M.csv doesn't exist.")
+    error("Markup file markup.csv doesn't exist.")
   }
   
   ## Read in tearfile
@@ -231,7 +228,7 @@ retistruct.read.recdata <- function(o, check=TRUE) {
   return(NULL)
 }
 
-##' @title Reconstruct a retina
+##' Reconstruct a retina
 ##' @param o \code{\link{AnnotatedOutline}} object
 ##' @param report Function to report progress
 ##' @param plot.3d If \code{TRUE} show progress in a 3D plot 
@@ -246,7 +243,7 @@ retistruct.read.recdata <- function(o, check=TRUE) {
 ##' reconstruction information
 ##' @author David Sterratt
 ##' @export
-retistruct.reconstruct <- function(o, report=retistruct.report,
+retistruct.reconstruct <- function(o, report=message,
                                    plot.3d=FALSE, dev.flat=NA, dev.polar=NA,
                                    ...) {
   ## Check that markup is there
@@ -305,6 +302,7 @@ retistruct.reconstruct <- function(o, report=retistruct.report,
 ##' @title Save markup
 ##' @param a \code{\link{RetinalDataset}} object
 ##' @author David Sterratt
+##' @importFrom utils write.csv 
 ##' @export
 retistruct.save.markup <- function(a) {
   if (inherits(a, "retinalDataset")) {

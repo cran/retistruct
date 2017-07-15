@@ -1,3 +1,50 @@
+CHANGES IN VERSION 0.5.11 - Released 2017/07/15
+
+RELEASE NOTES
+
+* R 3.4.0 is required to run the graphical user interface (GUI),
+  because there is no version of the RGtk2 package that works with
+  earlier versions of R available on CRAN.
+
+* There is a bug in version 1.0.5 of gWidgets2RGtk that prevents the GUI
+  working. If you encounter this problem, work around it by typing
+
+    install.packages("gWidgets2RGtk2")
+
+  in the R console and then running retistruct() again. (You may need
+  to quit R befor being able to run this command.) More information
+  at: https://github.com/davidcsterratt/retistruct/issues/13
+
+NEW FEATURES
+
+* The CSV input format can now take a file of counts (or "grouped") data
+  (https://github.com/davidcsterratt/retistruct/issues/7)
+  Thanks to Nicolas Nagoo for the report.
+
+BUG FIXES
+
+* 3D (RGL) plot now appears after reconstruction
+  (https://github.com/davidcsterratt/retistruct/issues/5)
+  Thanks to Nicolas Nagoo for the report.
+
+* gWidgets2RGtk not found and package.dependencies() is deprecated
+  (https://github.com/davidcsterratt/retistruct/issues/12)
+
+* gWidgets2::gdroplist is deprecated
+  (https://github.com/davidcsterratt/retistruct/issues/10)
+
+* Test failed buiding on Windows i386
+  (https://github.com/davidcsterratt/retistruct/issues/14)
+
+* Issue with adding tears in retistruct
+  (https://github.com/davidcsterratt/retistruct/issues/11)
+  Thanks to https://github.com/sagewiltse for the report.
+
+CODE IMPROVEMENTS
+
+* gWidgets2 is now used instead of gWidgets. Thanks to John Verzani
+  for fixing bugs in gWidgets2.
+
 CHANGES IN VERSION 0.5.10 - Released 2015/02/16
 
 CODE IMPROVEMENTS
@@ -11,5 +58,5 @@ BUG FIXES
 
 * The message produced by delaunayn() in geometry package 0.3-5 has
   been suppressed.
-  https://github.com/davidcsterratt/retistruct/issues/3
+  (https://github.com/davidcsterratt/retistruct/issues/3)
   Thanks to Brian Cohn for the report.

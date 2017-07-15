@@ -8,6 +8,7 @@
 ##' @param suppress.external.steiner If \code{TRUE} prevent the
 ##' addition of points in the outline. This happens to maintain
 ##' triangle quality.
+##' @param report Function to report progress
 ##' @return A \code{triangulatedOutline} object containing the
 ##' following fields:
 ##' \item{\code{P}}{The set of new points, with the existing points at the start}
@@ -27,7 +28,8 @@
 ##' @author David Sterratt
 ##' @export
 TriangulatedOutline <- function(o, n=200,
-                                suppress.external.steiner=FALSE) {
+                                suppress.external.steiner=FALSE,
+                                report=message) {
   P <- o$P
   g <- o$gf
   h <- o$h
@@ -118,13 +120,13 @@ TriangulatedOutline <- function(o, n=200,
           ## Find triangles containing the line
           ## segments(P[C1,1], P[C1,2], P[C2,1], P[C2,2], col="yellow")
           Tind <- which(apply(T, 1 ,function(x) {(C1 %in% x) && (C2 %in% x)}))
-          print(paste("Non-adjacent points in rim connected by line:", C1, C2))
-          print(paste("In triangle:", Tind))
-          ## Find points T1 & T2 in the two triangles which are not common
-          ## with the edge
+          report(paste("Non-adjacent points in rim connected by line:", C1, C2))
+          report(paste("In triangle:", paste(Tind, collapse=", ")))
+          ## Find points T1 & T2 in the two triangles which are
+          ## not common with the edge
           T1 <- setdiff(T[Tind[1],], Cu[i,])
           T2 <- setdiff(T[Tind[2],], Cu[i,])
-          print(paste("Other points in triangles:", T1, T2))
+          report(paste("Other points in triangles:", T1, T2))
           ## Create a new point at the centroid of the four verticies
           ## C1, C2, T1, T2
           p <- apply(P[c(C1, C2, T1, T2),], 2, mean)
@@ -168,6 +170,45 @@ TriangulatedOutline <- function(o, n=200,
   return(t)
 }
 
+## Convert a matrix containing on each line the indicies of the points
+## forming a segment, and convert this to two sets of ordered pointers
+segments2pointers <- function(S) {
+  g <- c()
+  j <- 1                                # Row of S
+  k <- 1                                # Column of S
+  while(nrow(S) > 0) {
+    i <- S[j,3-k]                       # i is index of the next point
+    g[S[j,k]] <- i                      # Set the pointer to i
+    S <- S[-j,,drop=FALSE]              # We have used this row of S
+    if (nrow(S) == 0) {
+      return(g)
+    }
+    j <- which(S[,1] == i)            # Is i in the first column of S?
+    if (length(j) > 1) {
+      stop("The segment list is not valid as it contains an element more than twice.")
+    }
+    if (length(j)) {              # If so, set the current column to 1
+      k <- 1
+    } else {
+      j <- which(S[,2] == i) # Otherwise, look for i in the second column
+      k <- 2
+      if (!length(j)) {
+        stop(paste("No matching index for point", i, "in S."))
+        return(NULL)
+      }
+    }
+  }
+  return(g)
+}
+
+## Convert a set of ordered pointers to a matrix containing on each
+## line the indicies of the points forming a segment
+pointers2segments <- function(g) {
+  S1 <- which(!is.na(g))
+  S2 <- g[S1]
+  return(cbind(S1, S2))
+}
+
 ##' Plot flat \code{\link{TriangulatedOutline}}.
 ##'
 ##' @title Flat plot of TriangulatedOutline
@@ -187,3 +228,4 @@ flatplot.triangulatedOutline <- function(x, axt="n", ylim=NULL,
   if (mesh) 
     with(x, trimesh(T, P, col="grey", add=TRUE))
 }
+

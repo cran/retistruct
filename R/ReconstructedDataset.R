@@ -80,7 +80,7 @@ ReconstructedDataset <- function(r, report=message) {
   return(d)
 }
 
-##' @title Get IDs of groups of data within a ReconstructedDataset
+##' Get IDs of groups of data within a ReconstructedDataset
 ##' @param r \code{\link{ReconstructedDataset}} object
 ##' @return Array of IDs
 ##' @author David Sterratt
@@ -102,7 +102,7 @@ getDss.reconstructedDataset <- function(r) {
   return(r$Dss)
 }
 
-##' @title Get grouped variable with locations in spherical coordinates.
+##' Get grouped variable with locations in spherical coordinates.
 ##' @param r \code{ReconstructedDataset} object.
 ##' @return \code{Gss}
 ##' @method getGss reconstructedDataset
@@ -132,7 +132,7 @@ getDssMean.reconstructedDataset <- function(r) {
   return(Dss.mean)
 }
 
-##' @title Get area of convex hull around data points on sphere
+##' Get area of convex hull around data points on sphere
 ##' @param r code{\link{ReconstructedDataset}} or \code{\link{RetinalReconstructedDataset}} object.
 ##' @return Area in degress squared
 ##' @author David Sterratt
@@ -179,7 +179,7 @@ getSssMean.reconstructedDataset <- function(r) {
   return(Sss.mean)
 }
 
-##' @title Get kernel density estimate of data points
+##' Get kernel density estimate of data points
 ##' @param r \code{\link{ReconstructedDataset}} object
 ##' @return See \code{\link{compute.kernel.estimate}}
 ##' @author David Sterratt
@@ -314,7 +314,7 @@ compute.kernel.estimate <- function(Dss, phi0, fhat, compute.conc) {
                          gpa=list(xs=gpa$xs, ys=gpa$ys, f=fpa, fu=fpau))
 
         ## Get contours in Cartesian space
-        cc <- contourLines(gpa$xs, gpa$ys, fpau, levels=flevels)
+        cc <- grDevices::contourLines(gpa$xs, gpa$ys, fpau, levels=flevels)
         cs <- list()
         ## Must be careful, as there is a core function called labels
         labels <- rep(NA, length(cc))
@@ -335,15 +335,15 @@ compute.kernel.estimate <- function(Dss, phi0, fhat, compute.conc) {
         KDE[[i]]$labels <- labels
         names(contour.areas) <- c()
         KDE[[i]]$contour.areas <- contour.areas
-        KDE[[i]]$tot.contour.areas <- aggregate(contour.areas ~ labels,
-                                                data.frame(labels, contour.areas), sum)
+        KDE[[i]]$tot.contour.areas <- stats::aggregate(contour.areas ~ labels,
+                                                       data.frame(labels, contour.areas), sum)
       }
     }
   }
   return(KDE)
 }
 
-##' @title Get kernel regression estimate of grouped data points
+##' Get kernel regression estimate of grouped data points
 ##' @param r \code{\link{ReconstructedDataset}} object
 ##' @return See \code{\link{compute.kernel.estimate}}
 ##' @author David Sterratt
@@ -368,7 +368,7 @@ getKR <- function(r) {
   return(r$KR)
 }
 
-##' @title Plot projection of reconstructed dataset
+##' Plot projection of reconstructed dataset
 ##' @param r \code{\link{ReconstructedDataset}} object
 ##' @param transform Transform function to apply to spherical coordinates
 ##' before rotation

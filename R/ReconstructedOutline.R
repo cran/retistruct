@@ -104,7 +104,7 @@ ReconstructedOutline <- function(o,
   ft <- with(r, flipped.triangles(phi, lambda, Tt, R))
   r$nflip0 <- sum(ft$flipped)
   
-  report("Optimising mapping with no area constratint using BFGS...")
+  report("Optimising mapping with no area constraint using BFGS...")
   r <- optimiseMapping(r, alpha=0, x0=0, nu=1,
                         plot.3d=plot.3d, 
                         dev.flat=dev.flat, dev.polar=dev.polar)
@@ -113,11 +113,11 @@ ReconstructedOutline <- function(o,
                           dtmax=500, maxmove=1E2, tol=1e-5,
                           plot.3d=plot.3d,
                           dev.flat=dev.flat, dev.polar=dev.polar)
-  report("Optimising mapping with strong area constratint using BFGS...")
+  report("Optimising mapping with strong area constraint using BFGS...")
   r <- optimiseMapping(r, alpha=alpha, x0=x0, nu=1,
                         plot.3d=plot.3d,
                         dev.flat=dev.flat, dev.polar=dev.polar)
-  report("Optimising mapping with weak area constratint using BFGS...")
+  report("Optimising mapping with weak area constraint using BFGS...")
   r <- optimiseMapping(r, alpha=alpha, x0=x0, nu=0.5,
                         plot.3d=plot.3d, 
                         dev.flat=dev.flat, dev.polar=dev.polar)
@@ -290,7 +290,7 @@ transform.image.reconstructedOutline <- function(r) {
   }
   return(r)
 }
-##' @title Get coordinates of corners of pixels of image in spherical
+##' Get coordinates of corners of pixels of image in spherical
 ##' coordinates 
 ##' @param r \code{\link{ReconstructedOutline}} object
 ##' @return Coordinates of corners of pixels in spherical coordinates 
@@ -328,6 +328,7 @@ getTss.reconstructedOutline <- function(r) {
 ##' @param ... Other plotting parameters
 ##' @method flatplot reconstructedOutline
 ##' @author David Sterratt
+##' @importFrom grDevices rainbow palette
 ##' @export
 flatplot.reconstructedOutline <- function(x, axt="n", ylim=NULL,
                                           grid=TRUE,
@@ -616,8 +617,8 @@ projection.reconstructedOutline <- function(r,
     immask[bigpx] <- FALSE
     
     ## Plot the polygon, masking as we go
-    polygon(impx[,immask], impy[,immask],
-            col=im[immask], border=im[immask])
+    graphics::polygon(impx[,immask], impy[,immask],
+                      col=im[immask], border=im[immask])
   }
 
   grid.maj.col <- getOption("grid.maj.col")
@@ -635,7 +636,7 @@ projection.reconstructedOutline <- function(r,
 
     ## Boundary of projection
     boundary <- projection("boundary")
-    polygon(boundary[,"x"], boundary[,"y"], border="black")
+    graphics::polygon(boundary[,"x"], boundary[,"y"], border="black")
   }
 
   ## Plot rim in visutopic space
@@ -679,7 +680,7 @@ projection.reconstructedOutline <- function(r,
     ## the desired fraction of the axes at which to plot the
     ## labels. This is done by this optimisation function.
     label.fax <- 0.02                   # Fraction of axis length from axes to plot labels
-    opt <- optimise(function(a) {
+    opt <- stats::optimise(function(a) {
       rs0 <- cbind(phi=r$phi0,     lambda=angles[1])
       rs  <- cbind(phi=r$phi0 + a, lambda=angles[1])
       rc0 <- projection(rotate.axis(transform(rs0, phi0=r$phi0),
@@ -799,6 +800,7 @@ sphericalplot.reconstructedOutline <- function(r,
 }
 
 ##' @export
+##' @importFrom graphics abline
 lvsLplot.reconstructedOutline <- function(r) {
   o <- getStrains(r)$spherical
   palette(rainbow(100)) ## Green is about 35; dark blue about 70
