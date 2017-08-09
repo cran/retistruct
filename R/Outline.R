@@ -13,6 +13,7 @@
 ##' \item{\code{gb}}{For each row of \code{P}, the index of \code{P} that is next in the outline travelling clockwise (backwards)}
 ##' \item{\code{im}}{The image as a \code{raster} object}
 ##' \item{\code{scale}}{The length of one unit of \code{P} in micrometres}
+##' @export
 ##' @author David Sterratt
 Outline <- function(P, scale=NA, im=NULL) {
   o <- list()
@@ -28,7 +29,7 @@ Outline <- function(P, scale=NA, im=NULL) {
   return(o)
 }
 
-##' Plot flat \code{\link{Outline}}. 
+##' Plot flat \code{\link{Outline}}.
 ##'
 ##' @title Flat plot of outline
 ##' @param x \code{\link{Outline}} object
@@ -39,7 +40,7 @@ Outline <- function(P, scale=NA, im=NULL) {
 ##' @param scalebar If  numeric and if the Outline has a \code{scale}
 ##' field, a scale bar of length \code{scalebar} mm is plotted.  If
 ##' \code{scalebar} is \code{FALSE} or there is no scale information
-##' in the \code{\link{Outline}} \code{x}  the scale bar is supressed.
+##' in the \code{\link{Outline}} \code{x}  the scale bar is suppressed.
 ##' @param add If \code{TRUE}, don't draw axes; add to existing plot.
 ##' @param lwd.outline Line width of outline
 ##' @param ... Other plotting parameters
@@ -91,17 +92,17 @@ flatplot.outline <- function(x, axt="n", ylim=NULL,
   })
 }
 
-##' Simplify an outline object by removing verticies bordering short
+##' Simplify an outline object by removing vertices bordering short
 ##' edges while not encroaching on any of the outline. At present,
 ##' this is done by finding concave vertices. It is safe to remove
 ##' these, at the expense of increasing the area a bit.
 ##'
 ##' @title Simplify an outline object by removing short edges
 ##' @param o \code{outline} object to simplify
-##' @param min.frac.length the minumum length as a fraction of the
-##' total length of the outline. 
+##' @param min.frac.length the minimum length as a fraction of the
+##' total length of the outline.
 ##' @param plot whether to display plotting or not during simplification
-##' @return Simlified \code{outline} object
+##' @return Simplified \code{outline} object
 ##' @author David Sterratt
 simplify.outline <- function(o, min.frac.length=0.001, plot=FALSE) {
   P <- o$P
@@ -111,11 +112,11 @@ simplify.outline <- function(o, min.frac.length=0.001, plot=FALSE) {
   l <- vecnorm(v)                     # Length of each edge
   ## Compute outer products at each vertex
   e <- extprod3d(cbind(v[c(N, 1:(N-1)),], 0), cbind(v, 0))[,3]
-  
+
   ## Find short edges
   S <- l/sum(l) < min.frac.length
 
-  ## Find indicies of points that can be removed.
+  ## Find indices of points that can be removed.
   ## They have to be concave or colinear (e<=0). And they need to border short edges
   i.rem <- which((e <= 0) & (S | (S[c(N, 1:(N-1))])))
 

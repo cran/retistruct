@@ -2,12 +2,12 @@
 % Please edit documentation in R/spheristruct.R
 \name{flipped.triangles}
 \alias{flipped.triangles}
-\title{Determine indicies of triangles that are flipped}
+\title{Determine indices of triangles that are flipped}
 \usage{
 flipped.triangles(phi, lambda, Tt, R)
 }
 \arguments{
-\item{phi}{Vector of lattitudes of points}
+\item{phi}{Vector of latitudes of points}
 
 \item{lambda}{Vector of longitudes of points}
 
@@ -17,7 +17,7 @@ flipped.triangles(phi, lambda, Tt, R)
 }
 \value{
 List containing:
-\item{\code{flipped}}{Indicies of in rows of \code{Tt} of flipped triangles.}
+\item{\code{flipped}}{Indices of in rows of \code{Tt} of flipped triangles.}
 \item{\code{cents}}{Vectors of centres.}
 \item{\code{areas}}{Areas of triangles.}
 }

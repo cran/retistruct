@@ -4,9 +4,10 @@
 ##' @title Constructor for AnnotatedOutline object
 ##' @param o \code{Outline} object
 ##' @return AnnotatedOutline object, with extra fields for tears
-##' (\code{V0}, \code{VF} and \code{VB}), lattitude of rim \code{phi0}
+##' (\code{V0}, \code{VF} and \code{VB}), latitude of rim \code{phi0}
 ##' and index of fixed point \code{i0}.
 ##' @author David Sterratt
+##' @export
 AnnotatedOutline <- function(o){
   a <- o
   class(a) <- addClass("annotatedOutline", o)
@@ -20,13 +21,13 @@ AnnotatedOutline <- function(o){
 }
 
 ##' Label a set of three unlabelled points supposed to refer to the
-##' apex and vertcies of a cut and tear with the V0 (Apex), VF
+##' apex and vertices of a cut and tear with the V0 (Apex), VF
 ##' (forward vertex) and VB (backward vertex) labels.
 ##'
-##' @title Label three outline point indicies as apicies and vertices of tear
-##' @param m the vector of three indicies
+##' @title Label three outline point indices as apices and vertices of tear
+##' @param m the vector of three indices
 ##' @param o Outline object
-##' @return Vector of indicies labelled with V0, VF and VB
+##' @return Vector of indices labelled with V0, VF and VB
 ##' @author David Sterratt
 ##' @export
 labelTearPoints <- function(o, m) {
@@ -80,9 +81,9 @@ whichTear <- function(o, pid) {
   return(tid)
 }
 
-##' Return indicies of tear in AnnotatedOutline
+##' Return indices of tear in AnnotatedOutline
 ##'
-##' @title Return indicies of tear in AnnotatedOutline
+##' @title Return indices of tear in AnnotatedOutline
 ##' @param o \code{AnnotatedOutline} object
 ##' @param tid Tear ID, which can be returned from \code{whichTear()}
 ##' @return Vector of three point IDs, labelled with \code{V0},
@@ -104,8 +105,8 @@ getTear <- function(o, tid) {
 ##' @param VF Forward vertices of tears
 ##' @return List
 ##' \item{\code{Rset}}{the set of points on the rim}
-##' \item{\code{TFset}}{list containing indicies of points in each foward tear}
-##' \item{\code{TBset}}{list containing indicies of points in each backward tear}
+##' \item{\code{TFset}}{list containing indices of points in each forward tear}
+##' \item{\code{TBset}}{list containing indices of points in each backward tear}
 ##' \item{\code{h}}{correspondence mapping}
 ##' \item{\code{hf}}{correspondence mapping in forward direction for
 ##'         points on boundary}
@@ -124,9 +125,9 @@ computeTearRelationships <- function(o, V0, VB, VF) {
   i.parent <- rep(0, M)                 # Index of parent tear.
                                         # Is 0 if root otherwise
                                         # index of tear if in forward side
-                                        # or negative index if in backward side 
+                                        # or negative index if in backward side
   Rset <- na.omit(o$gf)
-  
+
   ## Create lists of forward and backward tears
   TFset <- list()
   TBset <- list()
@@ -142,7 +143,7 @@ computeTearRelationships <- function(o, V0, VB, VF) {
       Rset <- setdiff(Rset, setdiff(TFset[[j]], VF[j]))
       Rset <- setdiff(Rset, setdiff(TBset[[j]], VB[j]))
     }
-    
+
     ## Search for parent tears
     ## Go through all tears
     for (j in 1:M) {
@@ -235,7 +236,7 @@ removeTear <- function(o, tid) {
 ##' @title Check that tears are all in the correct direction
 ##' @param o \code{AnnotatedOutline} object
 ##' @return If all is OK, returns empty vector.  If not, returns
-##' indicies of problematic tears.
+##' indices of problematic tears.
 ##' @author David Sterratt
 checkTears <- function(o) {
   out <- c()
@@ -271,7 +272,7 @@ setFixedPoint <- function(o, i0, name) {
 ##' @title Ensure that the fixed point is in the rim, not a tear
 ##' @param o \code{\link{AnnotatedOutline}} object
 ##' @return o \code{\link{AnnotatedOutline}} object in which \code{i0}
-##' may have been changed. 
+##' may have been changed.
 ##' @author David Sterratt
 ensureFixedPointInRim <- function(o) {
   suppressMessages(t <- computeTearRelationships(o, o$V0, o$VB, o$VF))
@@ -291,7 +292,7 @@ ensureFixedPointInRim <- function(o) {
 
 ##' Get rim length of AnnotatedOutline
 ##' @param o \code{\link{AnnotatedOutline}} object
-##' @return The rim length 
+##' @return The rim length
 ##' @author David Sterratt
 ##' @export
 getFlatRimLength <- function(o) {
@@ -301,7 +302,7 @@ getFlatRimLength <- function(o) {
 }
 
 ##' Plot flat \code{\link{AnnotatedOutline}}. The user markup is
-##' displayed by default. 
+##' displayed by default.
 ##'
 ##' @title Flat plot of AnnotatedOutline
 ##' @param x \code{\link{AnnotatedOutline}} object
@@ -334,4 +335,3 @@ flatplot.annotatedOutline <- function(x, axt="n", ylim=NULL,
     })
   }
 }
-
