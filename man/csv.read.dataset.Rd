@@ -4,13 +4,15 @@
 \alias{csv.read.dataset}
 \title{Read a retinal dataset in CSV format}
 \usage{
-csv.read.dataset(dataset)
+csv.read.dataset(dataset, report = message)
 }
 \arguments{
 \item{dataset}{Path to directory containing \code{outline.csv}}
+
+\item{report}{Function to report progress}
 }
 \value{
-A \code{\link{RetinalDataset}} object
+A \code{\link{RetinalOutline}} object
 }
 \description{
 Read a retinal dataset in CSV format. Each dataset is a folder

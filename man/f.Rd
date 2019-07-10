@@ -9,13 +9,13 @@ f(x, x0)
 \arguments{
 \item{x}{Main argument}
 
-\item{x0}{The cutoff parameter. Above this value the function is zero.}
+\item{x0}{The cut-off parameter. Above this value the function is zero.}
 }
 \value{
 The value of the function.
 }
 \description{
-Piecewise, smooth function that increases linearly with negative arguments. 
+Piecewise, smooth function that increases linearly with negative arguments.
 \deqn{    f(x) = \left\{
        \begin{array}{ll}
          -(x - x_0/2) & x < 0 \\

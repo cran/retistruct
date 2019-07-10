@@ -2,6 +2,16 @@
 ## Geometry functions
 ## 
 
+extprod3d <- function (x, y) 
+{
+    x <- matrix(x, ncol = 3)
+    y <- matrix(y, ncol = 3)
+    return(cbind(x[, 2] * y[, 3] - x[, 3] * y[, 2], x[, 3] * y[, 
+        1] - x[, 1] * y[, 3], x[, 1] * y[, 2] - x[, 2] * y[, 
+                                                           1]))
+}
+
+
 ##' Vector norm
 ##' @param X Vector or matrix. 
 ##' @return If a vector, returns the 2-norm  of the
@@ -17,7 +27,7 @@ vecnorm <- function(X) {
 }
 
 ##' "Signed area" of triangles on a plane
-##' @param P 2-column matrix of vertices of triangles
+##' @param P 3-column matrix of vertices of triangles
 ##' @param Pt 3-column matrix of indices of rows of \code{P} giving
 ##' triangulation
 ##' @return Vectors of signed areas of triangles. Positive sign
@@ -26,16 +36,20 @@ vecnorm <- function(X) {
 ##' @author David Sterratt
 ##' @export
 tri.area.signed <- function(P, Pt) {
-  A <- P[Pt[,1],]
-  B <- P[Pt[,2],]
-  C <- P[Pt[,3],]
-  AB <- cbind(B-A, 0)
-  BC <- cbind(C-B, 0)
-  return(0.5 * extprod3d(AB, BC)[,3])
+  if (ncol(P) != 3) {
+    stop("P must have 3 columns")
+  }
+  A <- P[Pt[,1],,drop=FALSE] 
+  B <- P[Pt[,2],,drop=FALSE]
+  C <- P[Pt[,3],,drop=FALSE]
+  AB <- B - A
+  BC <- C - B
+  vp <- extprod3d(AB, BC)
+  return(0.5*sign(vp[,3])*vecnorm(vp))
 }
 
 ##' Area of triangles on a plane
-##' @param P 2-column matrix of vertices of triangles
+##' @param P 3-column matrix of vertices of triangles
 ##' @param Pt 3-column matrix of indices of rows of \code{P} giving
 ##' triangulation
 ##' @return Vectors of areas of triangles
@@ -45,7 +59,7 @@ tri.area <- function(P, Pt) {
   return(abs(tri.area.signed(P, Pt)))
 }
 
-##' This uses l'Hullier's theorem to compute the spherical excess and
+##' This uses L'Hullier's theorem to compute the spherical excess and
 ##' hence the area of the spherical triangle.
 ##' 
 ##' @title Area of triangles on a sphere
@@ -167,6 +181,15 @@ line.line.intersection <- function(P1, P2, P3, P4, interior.only=FALSE) {
 ##' @return Matrix with identical consecutive rows removed.
 ##' @author David Sterratt
 remove.identical.consecutive.rows <- function(P) {
+  if (!is.matrix(P)) {
+    stop("P is not a matrix; it should be")
+  }
+  if (nrow(P) == 0) {
+    stop("P has no rows")
+  }
+  if (identical(P[1,], P[nrow(P),])) {
+    return(remove.identical.consecutive.rows(P[-nrow(P),]))
+  }
   for (i in 2:nrow(P)) {
     if (identical(P[i-1,], P[i,])) {
       return(remove.identical.consecutive.rows(P[-i,]))
@@ -181,7 +204,8 @@ remove.identical.consecutive.rows <- function(P) {
 ##' parameter d. If the distance l B'D is less than 2d, the distance
 ##' B'C' is l/2.
 ##'
-##' @title Remove intersections between adjacent segments in a closed path
+##' @title Remove intersections between adjacent segments in a closed
+##'   path
 ##' @param P The points, as a 2-column matrix
 ##' @param d Criterion for maximum distance when points are inserted
 ##' @return A new closed path without intersections
@@ -309,11 +333,12 @@ sphere.spherical.to.sphere.cart <- function(phi, lambda, R=1) {
 ##' @param lambda Longitudes of mesh points
 ##' @param R Radius of sphere 
 ##' @param Tt Triangulation
-##' @param cb Object returned by \link{tsearch} containing information on the
+##' @param cb Object returned by tsearch containing information on the
 ##' triangle in which a point occurs and the barycentric coordinates
 ##' within that triangle
 ##' @return An N-by-3 matrix of the Cartesian coordinates of the points
 ##' @author David Sterratt
+##' @importFrom geometry bary2cart
 ##' @export
 bary.to.sphere.cart <- function(phi, lambda, R, Tt, cb) {
   ## Initialise output
@@ -349,8 +374,9 @@ bary.to.sphere.cart <- function(phi, lambda, R, Tt, cb) {
 ##' @author David Sterratt
 ##' @export
 sphere.cart.to.sphere.spherical <- function(P, R=1) {
-  return(cbind(phi   =asin(P[,"Z"]/R),
-               lambda=atan2(P[,"Y"], P[,"X"])))
+  Ps <- geometry::cart2sph(P)
+  return(cbind(phi   = Ps[,"phi"],
+               lambda= Ps[,"theta"]))
 }
 
 ##' Project spherical coordinate system \eqn{(\phi, \lambda)} to a polar
@@ -392,7 +418,7 @@ spherical.to.polar.area <- function(phi, R=1) {
 ##' projection. Column names should be \code{x} and \code{y}
 ##' @author David Sterratt
 ##' @export
-sphere.spherical.to.polar.cart <- function(r, pa=FALSE, preserve="lattitude") {
+sphere.spherical.to.polar.cart <- function(r, pa=FALSE, preserve="latitude") {
   ## FIXME: This function should be deprecated in favour of
   ## azimuthal.equalarea and azimuthal.equidistant in projections.R
   rho <- NULL
@@ -406,7 +432,7 @@ sphere.spherical.to.polar.cart <- function(r, pa=FALSE, preserve="lattitude") {
     ## rho = alpha*sqrt(2*(1+sin(phi))/(1-sin(phi)))
     rho <- sqrt(2*(1+sin(r[,"phi"]))/(1-sin(r[,"phi"])))
   }
-  if (preserve=="lattitude") {
+  if (preserve=="latitude") {
     rho <- pi/2 + r[,"phi"]
   }
   if (is.null(rho))
@@ -430,7 +456,7 @@ sphere.spherical.to.polar.cart <- function(r, pa=FALSE, preserve="lattitude") {
 ##' sphere. Column names are \code{phi} and \code{lambda}.
 ##' @author David Sterratt
 ##' @export
-polar.cart.to.sphere.spherical <- function(r, pa=FALSE, preserve="lattitude") {
+polar.cart.to.sphere.spherical <- function(r, pa=FALSE, preserve="latitude") {
   ## FIXME: This function should be deprecated in favour of as-yet
   ## unwritten functions azimuthal.equalarea.inverse and
   ## azimuthal.equidistant.inverse in projections.R
@@ -449,7 +475,7 @@ polar.cart.to.sphere.spherical <- function(r, pa=FALSE, preserve="lattitude") {
     ## phi = asin((rho^2/alpha^2-2)/(rho^2/alphpa^2+2))
     phi <- asin((rho2 - 2)/(rho2 + 2))
   }
-  if (preserve=="lattitude") {
+  if (preserve=="latitude") {
     phi <- sqrt(rho2) - pi/2
   }
   if (is.null(phi))
@@ -471,9 +497,9 @@ polar.cart.to.sphere.spherical <- function(r, pa=FALSE, preserve="lattitude") {
 ##' @examples
 ##' r0 <- cbind(alpha=0, theta=0)
 ##' r <- rbind(r0, r0+c(1,0), r0-c(1,0), r0+c(0,1), r0-c(0,1))
-##' azel.to.sphere.colattitude(r, r0)
+##' azel.to.sphere.colatitude(r, r0)
 ##' @export
-azel.to.sphere.colattitude <- function(r, r0) {
+azel.to.sphere.colatitude <- function(r, r0) {
   ## Find Cartesian coordinates of aziumuth and elevation on sphere
   rc <- cbind(cos(r[,"alpha"])*sin(r[,"theta"]),
               cos(r[,"alpha"])*cos(r[,"theta"]),
@@ -644,18 +670,18 @@ sphere.cart.to.sphere.wedge <- function(P, phi0, R=1) {
 }
 
 ##' Convert points in 3D cartesian space to locations of points on
-##' sphere in 'dualwedge' coordinates (\var{fx}, \var{fy}).  Wedges
+##' sphere in \sQuote{dual-wedge} coordinates (\var{fx}, \var{fy}).  Wedges
 ##' are defined by planes inclined at angle running through a line
 ##' between poles on the rim above the x axis or the y-axis.  \var{fx}
 ##' and \var{fy} are the fractional distances along the circle defined
 ##' by the intersection of this plane and the curtailed sphere.
 ##'
-##' @title Convert from Cartesian to 'dualwedge' coordinates
+##' @title Convert from Cartesian to \sQuote{dual-wedge} coordinates
 ##' @param P locations of points on sphere as N-by-3 matrix with
-##' labelled columns "X", "Y" and "Z"
+##' labelled columns \code{X}, \code{Y} and \code{Z}
 ##' @param phi0 rim angle as colatitude
 ##' @param R radius of sphere 
-##' @return 2-column Matrix of 'wedge' coordinates of points on
+##' @return 2-column Matrix of \sQuote{wedge} coordinates of points on
 ##' sphere. Column names are \code{phi} and \code{lambda}.
 ##' @export
 ##' @author David Sterratt
@@ -690,7 +716,7 @@ central.angle <- function(phi1, lambda1, phi2, lambda2) {
 }
 
 ##' The Karcher mean of a set of points on a manifold is defined as
-##' the point whose sum of squared Riemmann distances to the points is
+##' the point whose sum of squared Riemann distances to the points is
 ##' minimal. On a sphere using spherical coordinates this distance
 ##' can be computed using the formula for central angle.
 ##'
@@ -784,5 +810,33 @@ create.polar.cart.grid <- function(pa, res, phi0) {
   ## Now convert the cartesian coordinates to polar coordinates
   gs <- polar.cart.to.sphere.spherical(gc, pa)
   return(list(s=gs, c=gc, xs=xs, ys=ys))
+}
+
+##' Arc length of a parabola y=x^2/4f
+##' @param x1 x co-ordinate of start of arc
+##' @param x2 x co-ordinate of end of arc
+##' @param f focal length of parabola
+##' @return length of parabola arc
+##' @author David Sterratt
+parabola.arclength <- function(x1, x2, f) {
+  h1 <- x1/2
+  h2 <- x2/2
+  q1 <- sqrt(f^2 + h1^2)
+  q2 <- sqrt(f^2 + h2^2)
+  s <- (h2*q2 - h1*q1)/f + f*log((h2 + q2)/(h1 + q1))
+  return(s)
+}
+
+##' Inverse arc length of a parabola y=x^2/4f
+##' @param x1 co-ordinate of start of arc
+##' @param s length of parabola arc to follow
+##' @param f focal length of parabola
+##' @return x co-ordinate of end of arc
+##' @importFrom stats uniroot
+##' @author David Sterratt
+parabola.invarclength <- function(x1, s, f) {
+  sapply(s, function(s) {
+    uniroot(function(x) {parabola.arclength(x1, x, f) - s}, c(x1, x1 + s + 1))$root
+  })
 }
 

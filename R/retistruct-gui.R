@@ -3,7 +3,7 @@
 ##' @return Object with \code{getData()} method to return
 ##' reconstructed retina data and environment \code{this} which
 ##' contains variables in object.
-##' @importFrom grDevices dev.cur dev.set
+##' @importFrom grDevices dev.cur dev.set dev.print
 ##' @importFrom graphics identify
 ##' @importFrom utils packageVersion
 ##' @export
@@ -92,7 +92,7 @@ retistruct <- function() {
                    g.print1, g.print2,
                    g.print.pdf1, g.print.pdf2), state)
     if (state) 
-      enable.group(c(g.mark.od), retistruct.potential.od(a))
+      enable.group(c(g.mark.od), length(a$getFeatureSet("LandmarkSet")$getIDs() > 0))
     if (!retistruct.check.markup(a)) {
       enable.group(c(g.reconstruct), FALSE)
     }
@@ -106,8 +106,8 @@ retistruct <- function() {
   }
 
   ## Function to report to set status
-  set.status <- function(s) {
-    gWidgets2::svalue(g.status) <- s
+  set.status <- function(...) {
+    gWidgets2::svalue(g.status) <- paste0(...)
   }
 
   ## Utility function
@@ -124,71 +124,74 @@ retistruct <- function() {
   ## Editting handlers
   ##
 
-  ## Handler for adding a point
+  ## Handler for adding a tear
   h.add <- function(h, ...) {
     unsaved.data(TRUE)
     enable.widgets(FALSE)
     gWidgets2::svalue(g.status) <- paste("Click on the three points of the tear in any order.",
                               identify.abort.text())
     dev.set(d1)
-    pids <- with(a, identify(P[,1], P[,2], n=3, col=getOption("TF.col")))
+    P <- a$getPoints()
+    pids <- identify(P[,"X"], P[,"Y"], n=3, col=getOption("TF.col"))
     withCallingHandlers({
-      a <<- addTear(a, pids)
+      a$addTear(pids)
     }, warning=h.warning, error=h.warning)
     do.plot()
     gWidgets2::svalue(g.status) <- ""
     enable.widgets(TRUE)
   }
 
-  ## Handler for removing points
+  ## Handler for removing a tear
   h.remove <- function(h, ...) {
     unsaved.data(TRUE)
     enable.widgets(FALSE)
     gWidgets2::svalue(g.status) <- paste("Click on the apex of the tear to remvoe.",
                               identify.abort.text())
     dev.set(d1)
-    id <- with(a, identify(P[,1], P[,2], n=1, plot=FALSE))
-    a <<- removeTear(a, whichTear(a, id))
+    P <- a$getPoints()
+    id <- identify(P[,"X"], P[,"Y"], n=1, plot=FALSE)
+    a$removeTear(a$whichTear(id))
     do.plot()
     gWidgets2::svalue(g.status) <- ""
     enable.widgets(TRUE)
   }
 
-  ## Handler for moving points
+  ## Handler for moving a point in a tear
   h.move <- function(h, ...) {
     unsaved.data(TRUE)
     enable.widgets(FALSE)
     dev.set(d1)
     ## Find the intial point
     gWidgets2::svalue(g.status) <- paste("Click on apex or vertex to move.",
-                              identify.abort.text())
-    id1 <- with(a, identify(P[,1], P[,2], n=1, plot=FALSE))
+                                         identify.abort.text())
+    P <- a$getPoints()
+    id1 <- identify(P[,"X"], P[,"Y"], n=1, plot=FALSE)
     
     ## Locate tear ID in which the point occurs
-    tid <- whichTear(a, id1)
+    tid <- a$whichTear(id1)
 
     ## If there is a tear in which it occurs, select a point to move it to
     if (!is.na(tid)) {
       gWidgets2::svalue(g.status) <- paste("Click on point to move it to.",
-                                identify.abort.text())
+                                           identify.abort.text())
 
       ## Label first point
-      with(a, points(P[id1,1], P[id1,2], col="yellow"))
+      points(P[id1,1], P[id1,2], col="yellow")
 
       ## Select second point
-      id2 <- with(a, identify(P[,1], P[,2], n=1))
+      id2 <- identify(P[,"X"], P[,"Y"], n=1)
 
       ## Get point ids of exsiting tear
-      pids <- getTear(a, tid)
+      pids <- a$getTear(tid)
 
       ## Replace old point with desired new point
       if (length(id2)) pids[pids==id1] <- id2
 
       ## It is possible to get the apex and vertex mixed up when moving points.
       ## Fix any errors.
-      pids <- labelTearPoints(a, pids)
-      a <<- removeTear(a, tid)
-      a <<- addTear(a, pids)
+      pids <- a$labelTearPoints(pids)
+      a$removeTear(tid)
+      a$addTear(pids)
     }
 
     ## Display and cleanup
@@ -202,11 +205,12 @@ retistruct <- function() {
     unsaved.data(TRUE)
     enable.widgets(FALSE)
     gWidgets2::svalue(g.status) <- paste("Click on nasal point.",
-                              identify.abort.text())
+                                         identify.abort.text())
     dev.set(d1)
-    id <- with(a, identify(P[,1], P[,2], n=1))
+    P <- a$getPoints()
+    id <- identify(P[,"X"], P[,"Y"], n=1)
     withCallingHandlers({
-      a <<- setFixedPoint(a, id, "Nasal")
+      a$setFixedPoint(id, "Nasal")
     }, warning=h.warning, error=h.warning)
     do.plot()
     gWidgets2::svalue(g.status) <- ""
@@ -220,9 +224,10 @@ retistruct <- function() {
     gWidgets2::svalue(g.status) <- paste("Click on dorsal point.",
                               identify.abort.text())
     dev.set(d1)
-    id <- with(a, identify(P[,1], P[,2], n=1))
+    P <- a$getPoints()
+    id <- identify(P[,"X"], P[,"Y"], n=1)
     withCallingHandlers({
-      a <<- setFixedPoint(a, id, "Dorsal")
+      a$setFixedPoint(id, "Dorsal")
     }, warning=h.warning, error=h.warning)
     do.plot()
     gWidgets2::svalue(g.status) <- ""
@@ -234,26 +239,39 @@ retistruct <- function() {
     unsaved.data(TRUE)
     enable.widgets(FALSE)
     gWidgets2::svalue(g.status) <- paste("Click on a point on the optic disc.",
-                              identify.abort.text())
+                                         identify.abort.text())
     dev.set(d1)
     ## Convert list of segments to a matrix of points
     Sm <- NULL
-    for (S in a$Ss) {
+    fs <- a$getFeatureSet("LandmarkSet")
+    Ss <- fs$getFeatures()
+    for (S in Ss) {
       Sm <- rbind(Sm, S)
     }
 
     ## Identify a point
     id <- identify(Sm[,1], Sm[,2], n=1)
     
-    ## Idendify segment in which point appears
+    ## Identify segment in which point appears
     i <- 0
     N <- 0
-    while (id > N && i < length(a$Ss)) {
+    while (id > N && i < length(Ss)) {
       i <- i + 1
-      N <- N +  nrow(a$Ss[[i]])
+      N <- N +  nrow(Ss[[i]])
     }
     ## Set "OD" landmark
-    a <<- nameLandmark(a, i, "OD")
+    fs$setName(i, "OD")
+
+    ## Update IDs panel
+    checked <- a$getIDs() %in% c(gWidgets2::svalue(g.ids), "OD")
+    gWidgets2::delete(g.ids.frame, g.ids)
+    ids <- a$getIDs()
+    if (length(ids) > 0) {
+      g.ids <<- gWidgets2::gcheckboxgroup(ids, checked=checked,
+                                          handler=h.show,
+                                          container=g.ids.frame)
+    }
+    
     do.plot()
     gWidgets2::svalue(g.status) <- ""
     enable.widgets(TRUE)
@@ -280,7 +298,8 @@ retistruct <- function() {
     if (is.null(r)) {
       unlink(file.path(a$dataset, "r.Rdata"))
     } else {
-      retistruct.save.recdata(r)
+      ## FIXME: Issue #27: Saving and reading recddata need to be reviewed
+      ## retistruct.save.recdata(r)
     }
     retistruct.export.matlab(r)
     unsaved.data(FALSE)
@@ -315,7 +334,7 @@ retistruct <- function() {
   h.open <- function(h, ...) {
     ## Read the raw data
     withCallingHandlers({
-      a <<- retistruct.read.dataset(a$dataset)
+      a <<- retistruct.read.dataset(a$dataset, report=FALSE)
     }, warning=h.warning, error=h.error)
     
     ## Read the markup
@@ -325,11 +344,13 @@ retistruct <- function() {
     gWidgets2::svalue(g.win)   <- paste(version.string(), "-" ,a$dataset)
     gWidgets2::svalue(g.phi0d) <- a$phi0*180/pi
     gWidgets2::svalue(g.eye)   <- a$side
+    gWidgets2::svalue(g.data) <-  ifelse (a$DVflip, "Flip DV", "")
     
     ## Read the reconstruction data
-    withCallingHandlers({
-      r <<- retistruct.read.recdata(a, check=TRUE)
-    }, warning=h.warning, error=h.error)
+    ## FIXME: Issue #27: Saving and reading recddata need to be reviewed    
+    ## withCallingHandlers({
+    ##   r <<- retistruct.read.recdata(a, check=TRUE)
+    ## }, warning=h.warning, error=h.error)
     ## If there is no reconstruction data, show the markup so that we
     ## don't think there is no markup.
     if (is.null(r)) {
@@ -339,16 +360,27 @@ retistruct <- function() {
       gWidgets2::svalue(g.nb) <- 2                   # Set "View" tab
     }
     gWidgets2::delete(g.ids.frame, g.ids)
-    ids <- getIDs(a)
-    if (!is.null(ids)) {
+    ids <- a$getIDs()
+    if (length(ids) > 0) {
       g.ids <<- gWidgets2::gcheckboxgroup(ids, checked=rep(TRUE, length(ids)),
-                               handler=h.show, container=g.ids.frame)
+                                          handler=h.show, container=g.ids.frame)
     }
     unsaved.data(FALSE)
     enable.widgets(TRUE)
     do.plot()
   }
 
+  h.retistructdemos <- function(dir1="Figure_6-data", dir2="left-ipsi", ...) {
+    dataset <- file.path(extdata.demos, dir1, dir2)
+    print(dataset)
+    if (!file.exists(dataset)) {
+      gWidgets2::gmessage("Install the retistructdemos package using devtools::install_github(\"davidcsterratt/retistruct/pkg/retistructdemos\")", title="Demo not installed", icon="error")
+    } else {
+      a$dataset <<- dataset
+      h.open()
+    }
+  }
+  
   ## Handler to start reconstructing the retina
   h.reconstruct <- function(h, ...) {
     unsaved.data(TRUE)
@@ -360,18 +392,26 @@ retistruct <- function() {
     }, warning=h.warning, error=h.warning)  
     enable.widgets(TRUE)
     do.plot()
+    set.status("")
   }
 
   ## Handler for showing data
   h.show <- function(h, ...) {
-    if(!is.null(h$pageno)) {
-      if (h$pageno == 1) {
-        do.plot(markup=TRUE)
-      } else {
-        do.plot(markup=("Markup" %in% (gWidgets2::svalue(g.show))))
-      }
+    tab <<- "Edit"
+    if (!is.null(h$page.no)) {
+      ## h$page.no is set when the notebook handler is called
+      ## print(paste("h.show: pageno:", h$page.no))
+      if (h$page.no == 2) { tab <<- "View" }
     } else {
-      do.plot()
+      ## Notebook not active
+      ## print(paste("h.show: g.nb:", gWidgets2::svalue(g.nb)))
+      if (gWidgets2::svalue(g.nb) == 2) { tab <<- "View" }
+    }
+    ## print(paste(tab, "Tab"))
+    if (tab == "Edit") {
+      do.plot(markup=TRUE)
+    } else {
+      do.plot(markup=("Markup" %in% (gWidgets2::svalue(g.show))))
     }
   }
 
@@ -389,7 +429,7 @@ retistruct <- function() {
     do.plot()
   }
 
-  ## Print device d to file
+  ## Print device or function d to file
   print.bitmap <- function(d, file) {
     dev <- NULL
     if (grepl(".png$", file, ignore.case=TRUE)) 
@@ -404,8 +444,14 @@ retistruct <- function() {
       file <- paste(file, ".png")
       dev <- grDevices::png
     }
-    dev.set(d)
-    dev.print(dev, file, width=1000, height=1000)
+    if (is.function(d)) {
+      dev(file, width=getOption("max.proj.dim"), height=getOption("max.proj.dim"))
+      d(max.proj.dim=getOption("max.proj.dim"))
+      dev.off()
+    } else {
+      dev.set(d)
+      dev.print(dev, file, width=getOption("max.proj.dim"), height=getOption("max.proj.dim"))
+    }
   }
 
   ## Print device d to file
@@ -467,7 +513,7 @@ retistruct <- function() {
   }
 
   h.print2 <- function(h, ...) {
-    h.print.bitmap(d2, initial.filename="image-polar.png")
+    h.print.bitmap(plotProjection, initial.filename="image-polar.png")
   }
 
   h.print.pdf2 <- function(h, ...) {
@@ -490,13 +536,37 @@ retistruct <- function() {
                 "Invert to hemisphere"=invert.sphere.to.hemisphere))
   }
 
+  plotProjection <- function(max.proj.dim=getOption("max.proj.dim"),
+                             markup=("Markup" %in% (gWidgets2::svalue(g.show)))) {
+    projection(r,
+               datapoints=("Points" %in% gWidgets2::svalue(g.show)),
+               datapoint.means=("Point means" %in% gWidgets2::svalue(g.show)),
+               landmarks=("Landmarks" %in% gWidgets2::svalue(g.show)),
+               transform=getTransforms()[[gWidgets2::svalue(g.transform)]],
+               projection=getProjections()[[gWidgets2::svalue(g.projection)]],
+               axisdir=cbind(phi=gWidgets2::svalue(g.axis.el), lambda=gWidgets2::svalue(g.axis.az)),
+               proj.centre=cbind(phi=gWidgets2::svalue(g.pc.el), lambda=gWidgets2::svalue(g.pc.az)),
+               datapoint.contours=("Point contours" %in% gWidgets2::svalue(g.show)),
+               grouped=("Counts" %in% gWidgets2::svalue(g.show)),
+               grouped.contours=("Count contours" %in% gWidgets2::svalue(g.show)),
+               grid=("Grid" %in% gWidgets2::svalue(g.show)),
+               markup=markup,
+               ids=gWidgets2::svalue(g.ids),
+               max.proj.dim=max.proj.dim)
+    
+    if (!is.null(r$EOD)) {
+      polartext(paste("OD displacement:",
+                      format(r$EOD, digits=3, nsmall=2), "deg"))
+    }
+  }  
+  
   ## Plot in edit pane
-  do.plot <- function(markup=("Markup" %in% (gWidgets2::svalue(g.show))) | (gWidgets2::svalue(g.nb) == 1)) {
+  do.plot <- function(markup=("Markup" %in% (gWidgets2::svalue(g.show)))) {
     
     if (is.null(r)) {
       r <- a
     }
-    if ("Strain" %in% gWidgets2::svalue(g.edit.show)) {   # Strain plot
+    if (("Strain" %in% gWidgets2::svalue(g.edit.show)) & (tab == "Edit")) {   # Strain plot
       dev.set(d1)
       par(mar=c(0.5, 0.5, 0.5, 0.5))
       flatplot(r, axt="n",
@@ -527,26 +597,11 @@ retistruct <- function() {
                scalebar=1)
       dev.set(d2)
       par(mar=c(0.7, 0.7, 0.7, 0.7))
-      projection(r,
-                 datapoints=("Points" %in% gWidgets2::svalue(g.show)),
-                 datapoint.means=("Point means" %in% gWidgets2::svalue(g.show)),
-                 landmarks=("Landmarks" %in% gWidgets2::svalue(g.show)),
-                 transform=getTransforms()[[gWidgets2::svalue(g.transform)]],
-                 projection=getProjections()[[gWidgets2::svalue(g.projection)]],
-                 axisdir=cbind(phi=gWidgets2::svalue(g.axis.el), lambda=gWidgets2::svalue(g.axis.az)),
-                 proj.centre=cbind(phi=gWidgets2::svalue(g.pc.el), lambda=gWidgets2::svalue(g.pc.az)),
-                 datapoint.contours=("Point contours" %in% gWidgets2::svalue(g.show)),
-                 grouped=("Counts" %in% gWidgets2::svalue(g.show)),
-                 grouped.contours=("Count contours" %in% gWidgets2::svalue(g.show)),
-                 ids=gWidgets2::svalue(g.ids))
-      ## FIXME: EOD not computed
-      if (!is.null(r$EOD)) {
-        polartext(paste("OD displacement:",
-                        format(r$EOD, digits=3, nsmall=2), "deg"))
-      }
+      plotProjection(max.proj.dim=400, markup=markup)
       sphericalplot(r, datapoints=("Points" %in% gWidgets2::svalue(g.show)))
     }
     dev.set(d1)
+    set.status("")
   }
 
   ## It would be nice to have error messages displayed graphically.
@@ -594,15 +649,20 @@ retistruct <- function() {
 
     g.printing <- gWidgets2::gframe("Printing", container=g.props, horizontal=FALSE)
     g.group <- gWidgets2::ggroup(container=g.printing)
-    gWidgets2::glabel("Maximum resolution of projection", container=g.group)
+    gWidgets2::glabel("Maximum width of projection", container=g.group)
     property <- "max.proj.dim"
-    g.max.proj.dim <- gWidgets2::gedit(0, width=5, coerce.with=as.numeric,
-                            container=g.group,
-                            handler=function(h, ...) {
-                              eval(parse(text=paste("options(", property, "=gWidgets2::svalue(g.max.proj.dim))")))
-                              do.plot()
-                            })
-    gWidgets2::svalue(g.max.proj.dim) <- getOption(property)
+    g.max.proj.dim <- gWidgets2::gedit(
+                                   getOption(property),
+                                   width=5, coerce.with=as.numeric,
+                                   container=g.group)
+    h.max.proj.dim <- function(h, ...) {
+      eval(parse(text=paste("options(", property, "=gWidgets2::svalue(g.max.proj.dim))")))
+    }
+    gWidgets2::addHandlerKeystroke(g.max.proj.dim, handler=h.max.proj.dim)
+    gWidgets2::addHandlerBlur(g.max.proj.dim, handler=h.max.proj.dim)
+
+    gWidgets2::glabel("pixels", container=g.group)
+    ## gWidgets2::svalue(g.max.proj.dim) <- getOption(property)
     
     gWidgets2::gbutton("Close", container=g.props,
             handler = function(h,...) gWidgets2::dispose(g.win))
@@ -654,28 +714,24 @@ retistruct <- function() {
     })
   mbl$Demos$left.contra <-
     gWidgets2::gaction(label="Figure 6 Left Contra",
-            handler=function(h, ...) {
-              a$dataset <<- file.path(extdata.demos, "Figure_6-data", "left-contra")
-              h.open()
-            })
+                       handler=function(h, ...) {
+                         h.retistructdemos("Figure_6-data", "left-contra")
+                       })
   mbl$Demos$left.ipsi <-
     gWidgets2::gaction(label="Figure 6 Left Ipsi",
-            handler=function(h, ...) {
-              a$dataset <<- file.path(extdata.demos, "Figure_6-data", "left-ipsi")
-              h.open()
-            })
+                       handler=function(h, ...) {
+                         h.retistructdemos("Figure_6-data", "left-ipsi")
+                       })
   mbl$Demos$right.contra <-
     gWidgets2::gaction(label="Figure 6 Right Contra",
-            handler=function(h, ...) {
-              a$dataset <<- file.path(extdata.demos, "Figure_6-data", "right-contra")
-              h.open()
-            })
+                       handler=function(h, ...) {
+                         h.retistructdemos("Figure_6-data", "right-contra")
+                       })
   mbl$Demos$right.ipsi <-
     gWidgets2::gaction(label="Figure 6 Right Ipsi",
-            handler=function(h, ...) {
-              a$dataset <<- file.path(extdata.demos, "Figure_6-data", "right-ipsi")
-              h.open()
-            })
+                       handler=function(h, ...) {
+                         h.retistructdemos("Figure_6-data", "right-ipsi")
+                       })
   mbl$Help$About <- gWidgets2::gaction(
     label="About",
     handler=function(h, ...) {
@@ -705,6 +761,8 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
 
   ## "Edit" and "View" tabs
   g.nb <- gWidgets2::gnotebook(container=g.body)
+  ## Keep track of state in global variable, which can be "Edit" or "View"
+  tab <- "Edit"
 
   ## Edit tab
   
@@ -747,9 +805,9 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
   g.show <- gWidgets2::gcheckboxgroup(c("Markup", "Stitch", "Grid", "Landmarks",
                              "Points", "Point means", "Point contours",
                              "Counts", "Count contours"),
-                           checked=c(TRUE, FALSE, FALSE, FALSE,
-                             FALSE, FALSE, FALSE,
-                             FALSE, FALSE),
+                           checked=c(TRUE, FALSE, FALSE, TRUE,
+                             TRUE, FALSE, FALSE,
+                             TRUE, FALSE),
                            handler=h.show, container=g.show.frame)
 
   ## Group IDs

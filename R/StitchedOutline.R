@@ -3,11 +3,10 @@
 ##' points.
 ##'
 ##' @title Stitch together incisions and tears in an AnnotatedOutline
-##' @param a \code{\link{AnnotatedOutline}} object 
 ##' @return
 ##' \item{\code{Rset}}{the set of points on the rim}
 ##' \item{\code{i0}}{the index of the landmark}
-##' \item{\code{P}}{a new set of meshpoints}
+##' \item{\code{P}}{a new set of mesh points}
 ##' \item{\code{V0}}{indices of the apex of each tear}
 ##' \item{\code{VF}}{indices of the forward vertex of each tear}
 ##' \item{\code{VB}}{indices of the backward vertex of each tear}
@@ -22,138 +21,60 @@
 ##' points on boundary}
 ##' @author David Sterratt
 ##' @export
-StitchedOutline <- function(a) {
-  
-  r <- computeTearRelationships(a, a$V0, a$VB, a$VF)
+StitchedOutline <- R6Class("StitchedOutline",
+  inherit = TriangulatedOutline,
+  public = list(
+    Rset = NULL,
+    TFset = NULL,
+    epsilon = NA,
+    initialize = function(...) {
+      super$initialize(...)
+      rs <- self$getRimSet()
+      self$hf <- rep(NA, nrow(self$P))
+      self$hf[rs] <- rs
+      self$hb <- rep(NA, nrow(self$P))
+      self$hb[rs] <- rs
+      ## Theoretically the maximum tolerance should be half of the
+      ## minimum distance between points. We'll make it this, or 0.01%
+      ## of the total outline length, whichever is smaller.
+      self$epsilon <- min(min(self$getOutlineLengths())/4,
+                          sum(self$getRimLengths())*0.01/100)
+    },
+        stitchTears = function() {
+      r <- self$computeTearRelationships(self$tears)
 
-  ## If not set, set the landmark marker index. Otherwise
-  ## check it
-  Rset <- r$Rset
-  if (!(a$i0 %in% Rset)) {
-    print(a$i0)
-    print(Rset)
-    stop("Fixed Point is not in rim")
-  }
-
-  P <- a$P
-  V0 <- a$V0
-  VF <- a$VF
-  VB <- a$VB
-  TFset <- r$TFset
-  TBset <- r$TBset
-  gf <- a$gf
-  gb <- a$gb
-  hf <- r$hf
-  hb <- r$hb
-  h <- r$h
-  
-  ## Insert points on the backward tears corresponding to points on
-  ## the forward tears
-  sF <-      suppressMessages(stitch.insert.points(P, V0, VF, VB, TFset, TBset,
-                                                   gf, gb, hf, hb, h,
-                                                   "Forwards"))
-
-  ## Insert points on the forward tears corresponding to points on
-  ## the backward tears
-  sB <- suppressMessages(with(sF,
-                              stitch.insert.points(P, V0, VB, VF, TBset, TFset,
-                                                   gb, gf, hb, hf, h,
-                                                   "Backwards")))
-  ## Extract data from object
-  P <- sB$P
-  gf <- sB$gb
-  gb <- sB$gf
-  hf <- sB$hb
-  hb <- sB$hf
-  h <- sB$h
-
-  ## Link up points on rim
-  h[Rset] <- hf[Rset]
-  
-  ## Make sure that there are no chains of correspondences
-  while (!all(h==h[h])) {
-   h <- h[h]
-  }
-
-  s <- merge(list(Rset=Rset, i0=a$i0,
-                  VF=VF, VB=VB, V0=V0,
-                  TFset=TFset, TBset=TBset,
-                  P=P, h=h, hf=hf, hb=hb,
-                  gf=gf, gb=gb), a)
-  class(s) <- addClass("stitchedOutline", a)
-  return(s)
-}
-
-## Inner function responsible for inserting the points
-stitch.insert.points <- function(P, V0, VF, VB, TFset, TBset, gf, gb, hf, hb, h,
-                                 dir) {
-  M <- length(V0)                       # Number of tears
-  ## Iterate through tears to insert new points
-  for (j in 1:M) {
-    ## Compute the total path length along each side of the tear
-    Sf <- path.length(V0[j], VF[j], gf, hf, P)
-    Sb <- path.length(V0[j], VB[j], gb, hb, P)
-    message(paste("Tear", j, ": Sf =", Sf, "; Sb =", Sb))
-
-    ## For each point in the forward path, create one in the backwards
-    ## path at the same fractional location
-    message(paste("  ", dir, " path", sep=""))
-    for (i in setdiff(TFset[[j]], c(V0[j], VF[j]))) {
-      sf <- path.length(V0[j], i, gf, hf, P)
-      ## If the point isn't at the apex, insert a point
-      if (sf > 0) {
-        message(paste("    i =", i,
-                                "; sf/Sf =", sf/Sf,
-                                "; sf =", sf))
-        for (k in TBset[[j]]) {
-          sb <- path.length(V0[j], k, gb, hb, P)
-          message(paste("      k =", format(k, width=4),
-                                  "; sb/Sb =", sb/Sb,
-                                  "; sb =", sb))
-          if (sb/Sb > sf/Sf) {
-            break;
-          }
-          k0 <- k
-          sb0 <- sb
-        }
-
-        ## If this point does not point to another, create a new point
-        if ((hf[i] == i)) {
-          f <- (sf/Sf*Sb-sb0)/(sb-sb0)
-          message(paste("      Creating new point: f =", f))
-          p <- (1-f) * P[k0,] + f * P[k,]
-
-          ## Find the index of any row of P that matches p
-          n <- anyDuplicated(rbind(P, p), fromLast=TRUE) 
-          if (n == 0) {
-            ## If the point p doesn't exist
-            P <- rbind(P, p)
-            ## Update forward and backward pointers
-            n <- nrow(P)                    # Index of new point
-            gb[n]     <- k
-            gf[n]     <- gf[k]
-            gb[gf[k]] <- n
-            gf[k]     <- n
-
-            ## Update correspondences
-            hf[n] <- n
-            hb[n] <- n
-            h[i] <- n
-            h[n] <- n
-          } else {
-            message(paste("      Point", n, "already exists"))
-            h[i] <- n
-            h[n] <- n
-          }
-        } else {
-          ## If not creating a point, set the point to point to the forward pointer 
-          h[i] <- hf[i]
-        }
+      if (length(r$TFset) == 0) {
+        return(NULL)
       }
-    } 
-  }
-  return(list(P=P, hf=hf, hb=hb, gf=gf, gb=gb, h=h))
-}
+      ## If not set, set the landmark marker index. Otherwise
+      ## check it
+      self$Rset <- r$Rset
+      if (!(self$i0 %in% self$Rset)) {
+        stop(paste("Fixed Point", self$i0, "is not in rim points:",
+                   paste(self$Rset, collapse=", ")))
+      }
+      
+      self$hf <- r$hf
+      self$hb <- r$hb
+      self$h <- r$h
+      for (i in 1:nrow(self$tears)) {
+        self$stitchSubpaths(self$tears[i,"V0"], self$tears[i,"VF"],
+                            self$tears[i,"V0"], self$tears[i,"VB"],
+                            epsilon=self$epsilon)
+      }
+      
+      ## Link up points on rim
+      self$h[self$Rset] <- self$hf[self$Rset]
+      
+      ## Make sure that there are no chains of correspondences
+      while (!all(self$h==self$h[self$h])) {
+        self$h <- self$h[self$h]
+      }
+      ## self$h <- h
+      self$TFset <- r$TFset
+    }
+  )
+)
 
 ##' Plot flat \code{\link{StitchedOutline}}. If the optional argument
 ##' \code{stitch} is \code{TRUE} the user markup is displayed.
@@ -161,42 +82,43 @@ stitch.insert.points <- function(P, V0, VF, VB, TFset, TBset, gf, gb, hf, hb, h,
 ##' @title Flat plot of AnnotatedOutline
 ##' @param x \code{\link{AnnotatedOutline}} object
 ##' @param axt whether to plot axes
+##' @param xlim x-limits
 ##' @param ylim y-limits
 ##' @param stitch If \code{TRUE}, plot stitch
 ##' @param lwd Line width
 ##' @param ... Other parameters
-##' @method flatplot stitchedOutline
+##' @method flatplot StitchedOutline
 ##' @author David Sterratt
 ##' @export
-flatplot.stitchedOutline <- function(x, axt="n", ylim=NULL,
+flatplot.StitchedOutline <- function(x, axt="n",
+                                     xlim=NULL, ylim=NULL,
                                      stitch=TRUE, lwd=1,
                                      ...) {
   NextMethod()
 
   if (stitch) {
-    with(x, {
-      for (TF in TFset) {
-        lines(P[TF,], col=getOption("TF.col"), lwd=lwd)
+    for (TF in x$TFset) {
+      lines(x$P[TF,], col=getOption("TF.col"), lwd=lwd)
+    }
+    for (TB in x$TBset) {
+      lines(x$P[TB,], col=getOption("TB.col"), lwd=lwd)
+    }
+    for (j in 1:length(x$h)) {
+      if (x$h[j] != j) {
+        lines(x$P[c(j, x$h[j]),], col=getOption("stitch.col"), lwd=lwd)
       }
-      for (TB in TBset) {
-        lines(P[TB,], col=getOption("TB.col"), lwd=lwd)
-      }
-      for (j in 1:length(h)) {
-        if (h[j] != j) {
-          lines(P[c(j, h[j]),], col=getOption("stitch.col"), lwd=lwd)
-        }
-      }
-      
-      for (j in 1:length(hf)) {
-        if (hf[j] != j) {
-          lines(P[c(j, hf[j]),], col=getOption("stitch.col"), lwd=lwd)
-        }
-      }
-      for (j in 1:length(hb)) {
-        if (hb[j] != j) {
-          lines(P[c(j, hb[j]),], col=getOption("V.stitch.col"), lwd=lwd)
-        }
-      }
-    })
+    }
+    ## if (!is.null(x$hf)) {
+    ##   for (j in 1:length(x$hf)) {
+    ##     if (x$hf[j] != j) {
+    ##       lines(x$P[c(j, x$hf[j]),], col=getOption("stitch.col"), lwd=lwd)
+    ##     }
+    ##   }
+    ##   for (j in 1:length(x$hb)) {
+    ##     if (x$hb[j] != j) {
+    ##       lines(x$P[c(j, x$hb[j]),], col=getOption("V.stitch.col"), lwd=lwd)
+    ##     }
+    ##   }
+    ## }
   }
 }

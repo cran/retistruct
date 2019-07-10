@@ -1,13 +1,24 @@
-read.scale <- function(dataset) {
+read.scale <- function(dataset, report=message) {
   ## If there is a scale file, read it
-  scale <- NA
+  scale <- c(Scale=NA, Units=NA)
   scfile <- file.path(dataset, "scale.csv")
   if (file.exists(scfile)) {
-    print("Reading scale file")
-    sc <- read.csv(file.path(dataset, "scale.csv"))
-    scale <- sc[1,1]
-    if (!is.numeric(scale)) {
+    report("Reading scale file")
+    sc <- read.csv(scfile)
+    valid.colnames <- c("Scale", "Units")
+    if (!all(colnames(sc) %in% valid.colnames)) {
+      stop(paste("Unknown column names",
+                 paste0("\"", setdiff(colnames(sc), valid.colnames), "\"",
+                        collapse=", "),
+                 "in", scfile, ". Valid column names:",
+                 paste(valid.colnames, collapse=", ")))
+    }
+    scale <- as.matrix(sc)[1,]
+    if (!("Scale" %in% names(scale)) | !is.numeric(scale["Scale"])) {
       stop("Scale file has not been read correctly. Check it is in the correct format.")
+    }
+    if (!("Units" %in% names(scale))) {
+      scale["Units"] <- NA
     }
   } else {
     warning("Scale file \"scale.csv\" does not exist. Scale bar will not be set.")
@@ -15,11 +26,11 @@ read.scale <- function(dataset) {
   return(scale)
 }
 
-read.image <- function(dataset) {
+read.image <- function(dataset, report=message) {
   im <- NULL
   imfile <- file.path(dataset, "image.png")
   if (file.exists(imfile)) {
-    message("Reading image")
+    report("Reading image")
     im <- grDevices::as.raster(png::readPNG(imfile))
   }
   return(im)
@@ -66,6 +77,7 @@ read.datapoints <- function(dataset) {
       ## converted to NA. Get rid of these.
       d <- na.omit(d)
       attr(d, "na.action") <- NULL
+      colnames(d) <- c("X", "Y")
 
       ## Add to lists with appropriate names
       
@@ -73,7 +85,7 @@ read.datapoints <- function(dataset) {
       names(D) <- names[1]
       Ds <- c(Ds, D)
 
-      col <- list(names[2])
+      col <- names[2]
       names(col) <- names[1]
       cols <- c(cols, col)
     }
@@ -81,13 +93,13 @@ read.datapoints <- function(dataset) {
   return(list(Ds=Ds, cols=cols))
 }
 
-##' Read data counts from a file \code{datacounts.csv} in the directory
-##' \code{dataset}. The CSV should contain two columns for every
-##' dataset. Each pair of columns must contain a unique name in the
-##' first cell of the first row  and a valid colour in the second
-##' cell of the first row. In the remaining rows, the X coordinates of
-##' data counts should be in the first column and the Y coordinates
-##' should be in the second column.
+##' Read data counts from a file \file{datacounts.csv} in the
+##' directory \code{dataset}. The CSV file should contain two columns
+##' for every dataset. Each pair of columns must contain a unique name
+##' in the first cell of the first row and a valid colour in the
+##' second cell of the first row. In the remaining rows, the X
+##' coordinates of data counts should be in the first column and the Y
+##' coordinates should be in the second column.
 ##'
 ##' @title Read data counts in CSV format
 ##' @param dataset Path to directory containing \code{dataponts.csv}

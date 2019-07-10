@@ -4,16 +4,18 @@
 \alias{retistruct.export.matlab}
 \title{Save reconstruction data in MATLAB format}
 \usage{
-retistruct.export.matlab(r)
+retistruct.export.matlab(r, filename = NULL)
 }
 \arguments{
-\item{r}{\code{\link{ReconstructedDataset}} object}
+\item{r}{\code{\link{RetinalReconstructedOutline}} object}
+
+\item{filename}{Filename of output file. If not specified, is
+\code{r.mat} in the same directory as the input files}
 }
 \description{
-Save as a MATLAB object certain fields  of an object \code{r}
-that inherits \code{\link{ReconstructedDataset}} and
-\code{\link{ReconstructedOutline}}  to a file called \code{r.mat}
-in the directory \code{r$dataset}.
+Save as a MATLAB object certain fields of an object \code{r} of
+class\code{\link{RetinalReconstructedOutline}} to a file called
+\code{r.mat} in the directory \code{r$dataset}.
 }
 \author{
 David Sterratt

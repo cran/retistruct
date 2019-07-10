@@ -2,7 +2,8 @@
 % Please edit documentation in R/geometry.R
 \name{remove.intersections}
 \alias{remove.intersections}
-\title{Remove intersections between adjacent segments in a closed path}
+\title{Remove intersections between adjacent segments in a closed
+  path}
 \usage{
 remove.intersections(P, d = 50)
 }

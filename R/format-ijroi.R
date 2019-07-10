@@ -12,9 +12,10 @@ ijroi.checkDatadir <- function(dir=NULL) {
 ##' 
 ##' @title Read a retinal dataset in IJROI format
 ##' @param dataset Path to directory containing \code{outline.roi}
-##' @return A \code{\link{RetinalDataset}} object
+##' @param report Function to report progress
+##' @return A \code{\link{RetinalOutline}} object
 ##' @author David Sterratt
-ijroi.read.dataset <- function(dataset) {
+ijroi.read.dataset <- function(dataset, report=report) {
   ## Read the raw data
   roi <- RImageJROI::read.ijroi(file.path(dataset, "outline.roi"))
   out <- roi$coords
@@ -23,7 +24,7 @@ ijroi.read.dataset <- function(dataset) {
   scale <- read.scale(dataset)
   
   ## If there is an image, read it
-  im <- read.image(dataset)
+  im <- read.image(dataset, report=report)
 
   ## ImageJ ROI format plots has the coordinate (0, 0) in the top
   ## left.  We have the coordinate (0, 0) in the bottom left. We need
@@ -39,13 +40,15 @@ ijroi.read.dataset <- function(dataset) {
   ## group has to be a valid colour. There are no datapoints in this
   ## format, but we may have landmarks.
   Ds <- list()
-  cols <- list(OD="blue",
-               default="orange")
+
+  cols <- c(OD="blue",
+            default="orange")
   dat <- read.datapoints(dataset)
   Ds <- c(Ds, dat$Ds)
   cols <- c(cols, dat$cols)
-  Ds <- lapply(Ds, function(P) {cbind(P[,1], offset - P[,2])})
-
+  Ds <- lapply(Ds, function(P) {cbind(X=P[,1], Y=(offset - P[,2]))})
+  
+  ## Extract landmarks (currently optic disc)
   Ss <- list()
 
   ## Read in an Optic Disc. FIXME: this should actually be marked as
@@ -55,21 +58,21 @@ ijroi.read.dataset <- function(dataset) {
     roi <- RImageJROI::read.ijroi(od.file)
     out <-  roi$coords
     out[,2] <- offset - out[,2]
+    colnames(out) <- c("X", "Y")
     Ss[["OD"]] <- out
   }
   
   ## Create forward and backward pointers
-  o <- Outline(P, scale, im)
-  o <- simplify.outline(o)
+  o <- RetinalOutline$new(P, scale=scale["Scale"], im=im,
+                          units=scale["Units"],
+                          dataset=dataset, report=report)
   
   ## Check that P is more-or-less closed
   ## if (vecnorm(P[1,] - P[nrow(P),]) > (d.close * diff(range(P[,1])))) {
   ##    stop("Unable to find a closed outline.")
   ## }
 
-  d <- Dataset(o, dataset, Ds, Ss, cols=cols, raw=list(outline=out))
-  a <- AnnotatedOutline(d)
-  a <- RetinalDataset(a)
-  return(a)
+  o$addFeatureSet(PointSet$new(data=Ds, cols=cols))
+  o$addFeatureSet(LandmarkSet$new(data=Ss, cols=cols))
+  return(o)
 }
-

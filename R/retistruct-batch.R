@@ -55,23 +55,25 @@ list.datasets <- function(path='.', verbose=FALSE) {
 ##'
 ##' @title Batch operation using the parallel package
 ##' @param tldir If datasets is not specified, the top level of the
-##' directory tree through which to recurse in order to find datasets.
+##'   directory tree through which to recurse in order to find
+##'   datasets.
 ##' @param outputdir directory in which to dump a log file and images
 ##' @param datasets Vector of dataset directories to reconstruct
 ##' @param device string indicating what type of graphics output
-##' required. Options are "pdf" and "png".
+##'   required. Options are \code{"pdf"} and \code{"png"}.
 ##' @param titrate Whether to "titrate" the reconstruction for
-##' different values of \code{phi0}. See \code{titrate.reconstructedOutline}.
+##'   different values of \code{phi0}. See
+##'   \code{titrate.reconstructedOutline}.
 ##' @param cpu.time.limit amount of CPU after which to terminate the
-##' process
-##' @param mc.cores The number of cores to use. Defaults to the total
-##' number available.
+##'   process
+##' @param mc.cores The number of cores to use. Defaults to the value
+##'   given by the option \code{mc.cores}
 ##' @author David Sterratt
 ##' @export
 retistruct.batch <- function(tldir='.', outputdir=tldir, datasets=NULL, 
                              device="pdf", titrate=FALSE,
                              cpu.time.limit=3600,
-                             mc.cores=getOption("cores")) {
+                             mc.cores=getOption("mc.cores", 2L)) {
   ## Get datasets
   if (is.null(datasets)) {
     datasets <- list.datasets(tldir)
@@ -87,13 +89,15 @@ retistruct.batch <- function(tldir='.', outputdir=tldir, datasets=NULL,
     flog <- file(logfile, open="wt")
     sink(flog)
     sink(flog, type="message")
-    return(retistruct.cli(dataset, cpu.time.limit, outputdir, device,
-                          titrate=titrate))
+    return(retistruct.cli(dataset, cpu.time.limit, outputdir, device
+                          ## ,
+                          ## titrate=titrate   ## FIXME: Issue #25: Titration
+                          ))
   }
 
   ## Run the reconstructions
   ret <- parallel::mclapply(datasets, call, mc.preschedule=FALSE,
-                  mc.cores=mc.cores)
+                            mc.cores=mc.cores)
 
   ## Extract data from the return structures
   ## Function to replace NULL with NA - needed for creating data frames
@@ -156,14 +160,14 @@ retistruct.batch.summary <- function(tldir=".", cache=TRUE) {
                         mean.dtheta=n(r$titration$Dtheta.mean),
                         phi0d=n(r$phi0*180/pi),
                         phi0d.opt=n(r$titration$phi0d.opt),
-                        L.rim=getFlatRimLength(r),
-                        A.tot=r$A.tot)
-      hullarea <- getDssHullarea(r)
+                        L.rim=sum(r$ol$getRimLengths()),
+                        A.tot=r$ol$A.tot)
+      hullarea <- r$getFeatureSet("PointSet")$getHullarea()
       if (length(hullarea) > 0) {
         dat <- data.frame(dat, hullarea=hullarea)
       }
       message(paste("Getting KDE"))
-      KDE <- getKDE(r)
+      KDE <- r$getFeatureSet("PointSet")$getKDE()
       if (length(KDE) > 0) {
         ## Get out bandwidths by going through each component of the KDE
         KDEdat <- lapply(KDE, function(x) {x$h})
@@ -176,8 +180,9 @@ retistruct.batch.summary <- function(tldir=".", cache=TRUE) {
           dat <- cbind(dat, KDEdat)
         }
       }
+
       message(paste("Getting KR"))
-      KR <- getKR(r)
+      KR <- r$getFeatureSet("CountSet")$getKR()
       if (length(KR) > 0) {
         ## Get out bandwidths by going through each component of the KR
         KRdat <- lapply(KR, function(x) {x$h})
@@ -317,10 +322,10 @@ retistruct.batch.plot.titrations <- function(tdat) {
 }
 
 ##' Recurse through a directory tree, determining whether the
-##' directory contains valid derived data and converting r.rData files
-##' to files in matlab format named r.mat
+##' directory contains valid derived data and converting
+##' \file{r.rData} files to files in MATLAB format named \file{r.mat}
 ##'
-##' @title Export data from reconstruction data files to matlab
+##' @title Export data from reconstruction data files to MATLAB
 ##' @param tldir The top level of the directory tree through which to
 ##' recurse
 ##' @author David Sterratt
@@ -428,7 +433,7 @@ retistruct.batch.analyse.summary <- function(path) {
   sdat$age <- sub(".*adult.*", "adult", sdat$age)
   sdat$age[grepl(".{6}", sdat$age)] <- NA
   sdat$age <- ordered(sdat$age, c(unique(sort(as.numeric(sdat$age))), "adult"))
-  ## print(factor(sdat$age))
+  ## factor(sdat$age))
   ## print(sort(as.numeric(factor(sdat$age))))
   ## levels(sdat$age) <- sub("(\\d+)", "P\\1", levels(sdat$age))
   levels(sdat$age) <- sub("adult", "A", levels(sdat$age))
@@ -442,31 +447,34 @@ retistruct.batch.analyse.summary <- function(path) {
   mtext(levels(sdat$age), 1, at=seq(1, len=length(levels(sdat$age))), line=0.3, cex=0.66)
   dev.print(svg, file=file.path(path, "fig3-retistruct-deformation.svg"), width=6.83/2, height=6.83/4)
 
+  ## FIXME: Issue #25: Enable retistruct.batch.plot.ods()
   ## Fig 4A-C: Locations of optic discs
-  dev.new(width=6.83/2, height=6.83/6)
-  par(mfcol=c(1, 3))
-  par(mar=c(0.7,0.7,0.7,0.7))
-  
-  retistruct.batch.plot.ods(subset(sdat, sdat$age=="A"),
-                            phi0d=subset(sdat, sdat$age=="A")[1, "phi0d"])
-  panlabel("A")
+  ## dev.new(width=6.83/2, height=6.83/6)
+  ## par(mfcol=c(1, 3))
+  ## par(mar=c(0.7,0.7,0.7,0.7))
 
-  summ <- retistruct.batch.plot.ods(subset(sdat, sdat$age=="A"),
-                            phi0d=-60)
-  panlabel("B")
+  ## FIXME: Issue #25: Enable retistruct.batch.plot.ods()
+  ## retistruct.batch.plot.ods(subset(sdat, sdat$age=="A"),
+  ##                           phi0d=subset(sdat, sdat$age=="A")[1, "phi0d"])
+  ## panlabel("A")
 
-  par(mar=c(2.4, 2.6, 0.7, 0.5))
-  par(mgp=c(1.3, 0.3, 0), tcl=-0.3)
+  ## FIXME: Issue #25: Enable retistruct.batch.plot.ods()
+  ## summ <- retistruct.batch.plot.ods(subset(sdat, sdat$age=="A"),
+  ##                          phi0d=-60)
+  ## panlabel("B")
+
+  ## par(mar=c(2.4, 2.6, 0.7, 0.5))
+  ## par(mgp=c(1.3, 0.3, 0), tcl=-0.3)
   
-  summlm <- stats::lm(OD.res ~ sqrt.E, summ)
-  with(summ, plot(sqrt.E, OD.res,
-                  xlab=expression(italic(e)[L]),
-                  ylab=expression(italic(epsilon)[OD]),
-                  pch=20, col="blue"))
-  abline(summlm)
-  panlabel("C")
-  dev.print(svg, file=file.path(path, "fig4-retistruct-ods.svg"), width=6.83/2, height=6.83/6)
-  print(summary(summlm))
+  ## summlm <- stats::lm(OD.res ~ sqrt.E, summ)
+  ## with(summ, plot(sqrt.E, OD.res,
+  ##                 xlab=expression(italic(e)[L]),
+  ##                 ylab=expression(italic(epsilon)[OD]),
+  ##                 pch=20, col="blue"))
+  ## abline(summlm)
+  ## panlabel("C")
+  ## dev.print(svg, file=file.path(path, "fig4-retistruct-ods.svg"), width=6.83/2, height=6.83/6)
+  ## print(summary(summlm))
   
   ## with(sdat, table(sqrt.E ~ age))
 
@@ -585,39 +593,42 @@ retistruct.batch.analyse.summaries <- function(path) {
 ##' datapoints 
 ##' @author David Sterratt
 ##' @export
-retistruct.batch.plot.ods <- function(summ, phi0d, ...) {
-  ## Make a dummy retina
-  o <- list()
-  class(o) <- "reconstructedOutline"
-  o$phi0 <- phi0d*pi/180
-  r <- RetinalDataset(o)
-  r <- ReconstructedDataset(r)
-  r <- RetinalReconstructedDataset(r)
-  r <- RetinalReconstructedOutline(r)
-  r$side <- "Right"
-  summ <- subset(summ, summ$age=="A")
-  r$Dss$OD <- na.omit(summ[,c("OD.phi","OD.lambda")])
-  colnames(r$Dss$OD) <- c("phi", "lambda")
-  r$cols["OD"] <- "blue"
-  
-  km <- karcher.mean.sphere(r$Dss$OD, na.rm=TRUE, var=TRUE)
-  message(nrow(summ), " points")
-  message("Mean: Lat ", format(km$mean["phi"]*180/pi, digits=3),
-          " Long ", format(km$mean["lambda"]*180/pi, digits=3),
-          " ; SD: ", format(sqrt(km$var)*180/pi, digits=3))
-  message("Mean location is ", 180/pi*central.angle(km$mean["phi"],
-                                      km$mean["lambda"],
-                                      -pi/2,
-                                      0),  " away from geometric centre")
-  
-  summ$OD.res <- 180/pi*central.angle(km$mean["phi"],
-                                      km$mean["lambda"],
-                                      r$Dss$OD[,"phi"],
-                                      r$Dss$OD[,"lambda"])
+##'
+## FIXME: Issue #25: Enable retistruct.batch.plot.ods()
+## retistruct.batch.plot.ods <- function(summ, phi0d, ...) {
 
-  projection(r, datapoint.contours=FALSE, philim=c(-90, phi0d), ...)
-  ## dev.new()
-  ## with(summ, plot(sqrt.E, OD.res))
-  ## abline(summlm)
-  return(summ)
-}
+##   ## Make a dummy retina
+##   o <- list()
+##   class(o) <- "reconstructedOutline"
+##   o$phi0 <- phi0d*pi/180
+##   r <- RetinalDataset(o)
+##   r <- ReconstructedDataset(r)
+##   r <- RetinalReconstructedDataset(r)
+##   r <- RetinalReconstructedOutline(r)
+##   r$side <- "Right"
+##   summ <- subset(summ, summ$age=="A")
+##   r$Dss$OD <- na.omit(summ[,c("OD.phi","OD.lambda")])
+##   colnames(r$Dss$OD) <- c("phi", "lambda")
+##   r$cols["OD"] <- "blue"
+  
+##   km <- karcher.mean.sphere(r$Dss$OD, na.rm=TRUE, var=TRUE)
+##   message(nrow(summ), " points")
+##   message("Mean: Lat ", format(km$mean["phi"]*180/pi, digits=3),
+##           " Long ", format(km$mean["lambda"]*180/pi, digits=3),
+##           " ; SD: ", format(sqrt(km$var)*180/pi, digits=3))
+##   message("Mean location is ", 180/pi*central.angle(km$mean["phi"],
+##                                       km$mean["lambda"],
+##                                       -pi/2,
+##                                       0),  " away from geometric centre")
+  
+##   summ$OD.res <- 180/pi*central.angle(km$mean["phi"],
+##                                       km$mean["lambda"],
+##                                       r$Dss$OD[,"phi"],
+##                                       r$Dss$OD[,"lambda"])
+
+##   projection(r, datapoint.contours=FALSE, philim=c(-90, phi0d), ...)
+##   ## dev.new()
+##   ## with(summ, plot(sqrt.E, OD.res))
+##   ## abline(summlm)
+##   return(summ)
+## }

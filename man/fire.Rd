@@ -4,9 +4,10 @@
 \alias{fire}
 \title{The FIRE algorithm}
 \usage{
-fire(r, force, restraint, m = 1, dt = 0.1, maxmove = 100, dtmax = 1,
-  Nmin = 5, finc = 1.1, fdec = 0.5, astart = 0.1, fa = 0.99,
-  a = 0.1, nstep = 100, tol = 1e-05, verbose = FALSE)
+fire(r, force, restraint, m = 1, dt = 0.1, maxmove = 100,
+  dtmax = 1, Nmin = 5, finc = 1.1, fdec = 0.5, astart = 0.1,
+  fa = 0.99, a = 0.1, nstep = 100, tol = 1e-05, verbose = FALSE,
+  report = message)
 }
 \arguments{
 \item{r}{Initial locations of particles}
@@ -41,6 +42,8 @@ fire(r, force, restraint, m = 1, dt = 0.1, maxmove = 100, dtmax = 1,
 report convergence}
 
 \item{verbose}{If \code{TRUE} report progress verbosely}
+
+\item{report}{Function to report progress when \code{verbose} is \code{TRUE}}
 }
 \value{
 List containing \code{x}, the positions of the points,

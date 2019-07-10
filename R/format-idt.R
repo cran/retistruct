@@ -267,6 +267,7 @@ idt.segment.to.pointers <- function(P) {
 ##' 
 ##' @title Read one of the Thompson lab's retinal datasets
 ##' @param dataset Path to directory containing as SYS and MAP file
+##' @param report Function to report progress
 ##' @param d.close Maximum distance between points for them to count
 ##' as the same point. This is expressed as a fraction of the width of
 ##' the outline.
@@ -281,9 +282,10 @@ idt.segment.to.pointers <- function(P) {
 ##' \item{gb}{Backward pointers along the outline}
 ##' \item{Ds}{List of datapoints}
 ##' \item{Ss}{List of landmark lines}
+##' @importFrom stats sd
 ##' @author David Sterratt
 ##' @export
-idt.read.dataset <- function(dataset, d.close=0.25) {
+idt.read.dataset <- function(dataset, report=message, d.close=0.25) {
   ## Read the raw data
   map <- idt.read.map(dataset)
   sys <- idt.read.sys(dataset)
@@ -292,11 +294,11 @@ idt.read.dataset <- function(dataset, d.close=0.25) {
   ##
   ## At present, for the plotting functions to work, the name of each
   ## group has to be a valid colour.
-  Ds <- list(green =cbind(na.omit(sys[,'XGREEN']), na.omit(sys[,'YGREEN'])),
+  Ds <- list(green =cbind(X=na.omit(sys[,'XGREEN']), Y=na.omit(sys[,'YGREEN'])),
              red   =cbind(
-               na.omit(c(sys[,'XDOUBLE'], sys[,'XRED'])),
-               na.omit(c(sys[,'YDOUBLE'], sys[,'YRED']))),
-             double=cbind(na.omit(sys[,'XDOUBLE']),na.omit(sys[,'YDOUBLE'])))
+               X=na.omit(c(sys[,'XDOUBLE'], sys[,'XRED'])),
+               Y=na.omit(c(sys[,'YDOUBLE'], sys[,'YRED']))),
+             double=cbind(X=na.omit(sys[,'XDOUBLE']), Y=na.omit(sys[,'YDOUBLE'])))
   cols <- list(green="green",
                red="red",
                double="yellow",
@@ -333,8 +335,8 @@ idt.read.dataset <- function(dataset, d.close=0.25) {
   names(scale) <- NULL
   
   ## Create Outline object
-  o <- Outline(P, scale=scale)
-  o <- simplify.outline(o)
+  o <- RetinalOutline$new(P, scale=scale, units="um",
+                          dataset=dataset, report=report)
   
   ## Check that P is more-or-less closed
   if (vecnorm(P[1,] - P[nrow(P),]) > (d.close * diff(range(P[,1])))) {
@@ -349,9 +351,9 @@ idt.read.dataset <- function(dataset, d.close=0.25) {
   ## Method 1: Just keep data from complete squares. This has the
   ## advantage of simplicity, but may lead to problems with
   ## contouring if the data is not surrounded by enough 0s.
-  Gs <- list(green =cbind(sys[ci,"XGRIDCOO"], sys[ci,"YGRIDCOO"], sys[ci,"TOTALGRE"]),
-             red   =cbind(sys[ci,"XGRIDCOO"], sys[ci,"YGRIDCOO"], sys[ci,"TOTALRED"] + sys[ci,"TOTALDOU"]),
-             double=cbind(sys[ci,"XGRIDCOO"], sys[ci,"YGRIDCOO"], sys[ci,"TOTALDOU"]))
+  Gs <- list(green =cbind(X=sys[ci,"XGRIDCOO"], Y=sys[ci,"YGRIDCOO"], C=sys[ci,"TOTALGRE"]),
+             red   =cbind(X=sys[ci,"XGRIDCOO"], Y=sys[ci,"YGRIDCOO"], C=sys[ci,"TOTALRED"] + sys[ci,"TOTALDOU"]),
+             double=cbind(X=sys[ci,"XGRIDCOO"], Y=sys[ci,"YGRIDCOO"], C=sys[ci,"TOTALDOU"]))
 
   ## ## Method 2: Remove data from incomplete squares within convex
   ## ## hull of data. This has the advantage that 0s from incomplete
@@ -378,9 +380,10 @@ idt.read.dataset <- function(dataset, d.close=0.25) {
   ## Remove points outwith outline
   Gs <- lapply(Gs, function(G) {
     G[sp::point.in.polygon(G[,1], G[,2], o$P[,1], o$P[,2]) == 1,,drop=FALSE]})
-  
-  d <- Dataset(o, dataset, Ds, Ss, cols=cols, raw=list(map=map, sys=sys), Gs=Gs)
-  a <- AnnotatedOutline(d)
-  a <- RetinalDataset(a)
-  return(a)
+
+  o$addFeatureSet(PointSet$new(data=Ds, cols=cols))
+  o$addFeatureSet(LandmarkSet$new(data=Ss, cols=cols))
+  o$addFeatureSet(CountSet$new(data=Gs, cols=cols))
+  ## d <- Dataset(o, dataset, Ds, Ss, cols=cols, raw=list(map=map, sys=sys), Gs=Gs)
+  return(o)
 }
