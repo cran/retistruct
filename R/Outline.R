@@ -22,8 +22,7 @@ Outline <- R6Class("Outline",
     h=NULL,
     im=NULL,
     dm=NULL,
-    report = NULL,
-    initialize=function(P=NULL, scale=NA, im=NULL, units=NA, report=message) {
+    initialize=function(P=NULL, scale=NA, im=NULL, units=NA) {
       self$P <- matrix(0, 0, 2)
       colnames(self$P) <- c("X", "Y")
       self$im <- im
@@ -35,7 +34,9 @@ Outline <- R6Class("Outline",
         pids <- self$addPoints(fragment$P)
         self$mapFragment(fragment, pids)
       }
-      self$report <- report
+    },
+    getImage = function() {
+      return(self$im)
     },
     replaceImage = function(im) {
       self$im <- im
@@ -176,9 +177,10 @@ flatplot.Outline <- function(x, axt="n",
   d <- na.omit(x$gb)                      # destination index
   
   if (!add) {
-    if (plot.image && !is.null(x$im)) {
-      xs <- 1:ncol(x$im)
-      ys <- 1:nrow(x$im)
+    im <- x$getImage()
+    if (plot.image && !is.null(im)) {
+      xs <- 1:ncol(im)
+      ys <- 1:nrow(im)
 
       if (is.null(xlim)) {
         xlim <- c(0, max(xs))
@@ -191,7 +193,7 @@ flatplot.Outline <- function(x, axt="n",
            xaxt=axt, yaxt=axt, bty="n",
            xlab="", ylab="")
       ## rasterImage crashes on some systems, but not others.
-      rasterImage(x$im, 0, 0, ncol(x$im), nrow(x$im))
+      rasterImage(im, 0, 0, ncol(im), nrow(im))
     } else {
       xs <- x$getPoints()[s,"X"]
       ys <- x$getPoints()[s,"Y"]

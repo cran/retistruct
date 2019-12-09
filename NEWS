@@ -1,4 +1,31 @@
-CHANGES IN VERSION 0.6.0 - Released 2018/07/xx
+CHANGES IN VERSION 0.6.1 - Released 2019/12/08
+
+NEW FEATURES
+
+* Allow resizing of windows
+  (https://github.com/davidcsterratt/retistruct/issues/34)
+
+* Allow data counts to be read in using ijroi and csv formats
+  (https://github.com/davidcsterratt/retistruct/issues/37)
+
+* Expose the mapping from flat coordinates to spherical coordinates in
+  reconstruected retina
+  (https://github.com/davidcsterratt/retistruct/issues/20)
+  This is achieved by the new member function mapFlatToSpherical() of
+  a ReconstructedOutline object
+
+BUG FIXES
+
+* Reinstated saving reconstructed data
+  (https://github.com/davidcsterratt/retistruct/issues/27)
+
+* Reinstated sphericalplot
+  (https://github.com/davidcsterratt/retistruct/issues/28)
+
+* retistruct.batch.summary() fails on retinae without CountSets
+  (https://github.com/davidcsterratt/retistruct/issues/30)
+
+CHANGES IN VERSION 0.6.0 - Released 2019/07/10
 
 BUG FIXES
 
@@ -14,10 +41,10 @@ CODE IMPROVEMENTS
   (https://github.com/davidcsterratt/retistruct/issues/25)
 
 * Stitching algorithm changed so it only creates new points when they
-  lie outwith tolerance a of an existing one. This prevent very short
+  lie outwith tolerance a of an existing one. This prevents very short
   lengths in triangulated outlines.
   (https://github.com/davidcsterratt/retistruct/issues/21) This work
-  arose from the bug with the idefinite determinant (see above).
+  arose from the bug with the indefinite determinant (see above).
 
 NEW FEATURES
 

@@ -107,6 +107,9 @@ retistruct <- function() {
 
   ## Function to report to set status
   set.status <- function(...) {
+    ## FIXME #46: status is not work; retistruct::report() added to
+    ## ensure output
+    retistruct::report(...)
     gWidgets2::svalue(g.status) <- paste0(...)
   }
 
@@ -298,8 +301,7 @@ retistruct <- function() {
     if (is.null(r)) {
       unlink(file.path(a$dataset, "r.Rdata"))
     } else {
-      ## FIXME: Issue #27: Saving and reading recddata need to be reviewed
-      ## retistruct.save.recdata(r)
+      retistruct.save.recdata(r)
     }
     retistruct.export.matlab(r)
     unsaved.data(FALSE)
@@ -347,10 +349,9 @@ retistruct <- function() {
     gWidgets2::svalue(g.data) <-  ifelse (a$DVflip, "Flip DV", "")
     
     ## Read the reconstruction data
-    ## FIXME: Issue #27: Saving and reading recddata need to be reviewed    
-    ## withCallingHandlers({
-    ##   r <<- retistruct.read.recdata(a, check=TRUE)
-    ## }, warning=h.warning, error=h.error)
+    withCallingHandlers({
+      r <<- retistruct.read.recdata(a, check=TRUE)
+    }, warning=h.warning, error=h.error)
     ## If there is no reconstruction data, show the markup so that we
     ## don't think there is no markup.
     if (is.null(r)) {
@@ -614,8 +615,12 @@ retistruct <- function() {
   }
 
   ## Warning message
+  prior.warnings <- c()
   h.warning <- function(e) {
-    gWidgets2::gmessage(e, title="Warning", icon="warning")
+    if (!(any(e %in% prior.warnings))) {
+      gWidgets2::gmessage(e, title="Warning", icon="warning")
+      prior.warnings <<- c(prior.warnings, e)
+    }
   }
 
   ## Poperties dialogue
@@ -647,7 +652,7 @@ retistruct <- function() {
     g.prop.dl("Major gridline colour", "grid.maj.col", g.colours)
     g.prop.dl("Minor gridline colour", "grid.min.col", g.colours)
 
-    g.printing <- gWidgets2::gframe("Printing", container=g.props, horizontal=FALSE)
+    g.printing <- gWidgets2::gframe("Bitmap/PDF output", container=g.props, horizontal=FALSE)
     g.group <- gWidgets2::ggroup(container=g.printing)
     gWidgets2::glabel("Maximum width of projection", container=g.group)
     property <- "max.proj.dim"
@@ -757,7 +762,7 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
                         container=g.win, style="both")
 
   ## Body of interface
-  g.body <- gWidgets2::ggroup(container=g.rows)
+  g.body <- gWidgets2::ggroup(container=g.rows, expand=TRUE)
 
   ## "Edit" and "View" tabs
   g.nb <- gWidgets2::gnotebook(container=g.body)
@@ -800,8 +805,10 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
   ## View Tab
 
   ## What to show
-  g.view <- gWidgets2::ggroup(horizontal=FALSE, container=g.nb, label="View")
-  g.show.frame <- gWidgets2::gframe("Show", container=g.view)
+  g.view <- gWidgets2::ggroup(horizontal=TRUE, container=g.nb, label="View")
+  g.view1 <- gWidgets2::ggroup(horizontal=FALSE, container=g.view)
+
+  g.show.frame <- gWidgets2::gframe("Show", container=g.view1)
   g.show <- gWidgets2::gcheckboxgroup(c("Markup", "Stitch", "Grid", "Landmarks",
                              "Points", "Point means", "Point contours",
                              "Counts", "Count contours"),
@@ -811,13 +818,14 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
                            handler=h.show, container=g.show.frame)
 
   ## Group IDs
-  g.ids.frame <- gWidgets2::gframe("IDs", container=g.view)
+  g.ids.frame <- gWidgets2::gframe("IDs", container=g.view1)
   g.ids <- gWidgets2::gcheckboxgroup("All", checked=TRUE,
                           handler=h.show, container=g.ids.frame)
 
-  
+
+  g.view2 <- gWidgets2::ggroup(horizontal=FALSE, container=g.view)
   ## Projection type
-  g.projection.frame <- gWidgets2::gframe("Projection", container=g.view)
+  g.projection.frame <- gWidgets2::gframe("Projection", container=g.view2)
   g.projection <- gWidgets2::gcombobox(
     names(getProjections()), selected=1, editable=FALSE,
     handler=h.show, action=NULL,
@@ -825,7 +833,7 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
     container=g.projection.frame)
 
   ## Projection centre
-  g.pc.frame <- gWidgets2::gframe("Projection centre", container=g.view, horizontal=TRUE)
+  g.pc.frame <- gWidgets2::gframe("Projection centre", container=g.view2, horizontal=TRUE)
   gWidgets2::glabel("El", container=g.pc.frame)
   g.pc.el <- gWidgets2::gedit("0", handler=h.show, width=5, coerce.with=as.numeric,
                    container=g.pc.frame)
@@ -834,7 +842,7 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
                    container=g.pc.frame)
 
   ## Transform
-  g.transform.frame <- gWidgets2::gframe("Transform", container=g.view)
+  g.transform.frame <- gWidgets2::gframe("Transform", container=g.view2)
   g.transform <- gWidgets2::gcombobox(
     names(getTransforms()), selected = 1, editable=FALSE,
     ellipsize="none",
@@ -842,7 +850,7 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
     container = g.transform.frame)
 
   ## Axis direction
-  g.axisdir.frame <- gWidgets2::gframe("Axis direction", container=g.view, horizontal=TRUE)
+  g.axisdir.frame <- gWidgets2::gframe("Axis direction", container=g.view2, horizontal=TRUE)
   gWidgets2::glabel("El", container=g.axisdir.frame)
   g.axis.el <- gWidgets2::gedit("90", handler=h.show, width=5, coerce.with=as.numeric,
                      container=g.axisdir.frame)
@@ -853,23 +861,23 @@ This work was supported by a Programme Grant from the Wellcome Trust (G083305). 
   ## Graphs at right
 
   ## Flat plot
-  g.f1 <- gWidgets2::ggroup(horizontal=FALSE, container=g.body)
+  g.f1 <- gWidgets2::ggroup(horizontal=FALSE, container=g.body, expand=TRUE)
   ## Buttons
   g.f1.buttons <- gWidgets2::ggroup(horizontal=TRUE, container=g.f1)
   g.print1     <- gWidgets2::gbutton("Bitmap", handler=h.print1,     container=g.f1.buttons)
   g.print.pdf1 <- gWidgets2::gbutton("PDF",    handler=h.print.pdf1, container=g.f1.buttons)
   ## Device itself
-  g.fd1 <- gWidgets2::ggraphics(expand=TRUE, width=500, height=500, ps=11, container=g.f1)
+  g.fd1 <- gWidgets2::ggraphics(expand=TRUE, ps=11, container=g.f1)
   d1 <- dev.cur()
 
   ## Projection
-  g.f2 <- gWidgets2::ggroup(horizontal=FALSE, container=g.body)
+  g.f2 <- gWidgets2::ggroup(horizontal=FALSE, container=g.body, expand=TRUE)
   ## Buttons  
   g.f2.buttons <- gWidgets2::ggroup(horizontal=TRUE, container=g.f2)  
   g.print2     <- gWidgets2::gbutton("Bitmap", handler=h.print2,     container=g.f2.buttons)
   g.print.pdf2 <- gWidgets2::gbutton("PDF",    handler=h.print.pdf2, container=g.f2.buttons)
   ## Device itself
-  g.fd2 <- gWidgets2::ggraphics(expand=TRUE, width=500, height=500, ps=11, container=g.f2)
+  g.fd2 <- gWidgets2::ggraphics(expand=TRUE, ps=11, container=g.f2)
   d2 <- dev.cur()
   
   ## Status bar

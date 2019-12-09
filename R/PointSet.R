@@ -9,8 +9,13 @@
 PointSet <- R6Class("PointSet",
   inherit = FeatureSet,
   public = list(
-    initialize = function(data, cols) {
-      super$initialize(data, cols, "PointSet")
+    initialize = function(data=NULL, cols=NULL) {
+      if (!is.null(data)) {
+        if (!all(sapply(data, function(d) (ncol(d) == 2)))) {
+          stop("Data must have 2 columns")
+        }
+        super$initialize(data, cols, "PointSet")
+      }
     },
     reconstruct = function(ro) {
       return(ReconstructedPointSet$new(self, ro))

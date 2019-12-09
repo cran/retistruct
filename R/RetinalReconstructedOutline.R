@@ -13,6 +13,7 @@ RetinalReconstructedOutline <- R6Class("RetinalReconstructedOutline",
   inherit = ReconstructedOutline,
   public = list(
     EOD = NULL,
+    fst = NULL,          # Transformed feature set
     ## @method getIms retinalReconstructedOutline
     ## @export
     getIms = function() {
@@ -41,11 +42,21 @@ RetinalReconstructedOutline <- R6Class("RetinalReconstructedOutline",
         self$EOD <- 90 + ODmean["phi"]*180/pi
       }
     },
-    featureSetTransform = function(Ps) {
+    getFeatureSet = function(type) {
+      fs <- super$getFeatureSet(type)
       if (self$ol$DVflip) {
-        Ps[,"lambda"] <- -Ps[,"lambda"]
+        if (is.null(self$fst)) {
+          fst <- fs$clone()
+          fst$Ps <-
+            lapply(fs$Ps,
+                   function(x) {
+                     x[,"lambda"] <- -x[,"lambda"]
+                     return(x)
+                   })
+        }
+        return(fst)
       }
-      return(Ps)
+      return(fs)
     }
   )
 )
@@ -125,8 +136,13 @@ projection.RetinalReconstructedOutline <-
       fs <- r$getFeatureSet("PointSet")
       if (!is.null(fs)) {
         projection.ReconstructedPointSet(fs,
+                                         phi0=r$phi0,
+                                         ids=ids,
+                                         transform=transform,
+                                         axisdir=axisdir,
                                          projection=projection,
-                                         phi0=r$phi0, ids=ids, ...)
+                                         proj.centre=proj.centre,
+                                         ...)
       }
     }
 
@@ -155,8 +171,13 @@ projection.RetinalReconstructedOutline <-
       fs <- r$getFeatureSet("CountSet")
       if (!is.null(fs)) {
         projection.ReconstructedCountSet(fs,
+                                         phi0=r$phi0,
+                                         ids=ids,
+                                         transform=transform,
+                                         axisdir=axisdir,
                                          projection=projection,
-                                         phi0=r$phi0, ids=ids, ...)
+                                         proj.centre=proj.centre,
+                                         ...)
       }
     }
     
@@ -237,8 +258,13 @@ projection.RetinalReconstructedOutline <-
       fs <- r$getFeatureSet("LandmarkSet")
       if (!is.null(fs)) {
         projection.ReconstructedLandmarkSet(fs,
+                                            phi0=r$phi0,
+                                            ids=ids,
+                                            transform=transform,
+                                            axisdir=axisdir,
                                             projection=projection,
-                                            phi0=r$phi0, ids=ids, ...)
+                                            proj.centre=proj.centre,
+                                            ...)
       }
     }
 
@@ -253,3 +279,17 @@ projection.RetinalReconstructedOutline <-
                mesh=mesh)
 
   }
+
+##' @method projection RetinalReconstructedOutline
+sphericalplot.RetinalReconstructedOutline <- function(r,
+                                                      datapoints=TRUE,
+                                                      ids=r$getIDs(), ...) {
+  NextMethod()
+
+  if (datapoints) {
+    message("Plotting points")
+      sphericalplot.ReconstructedPointSet(r,
+                                          projection=projection,
+                                          ids=ids, ...)
+  }
+}
