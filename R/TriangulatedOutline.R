@@ -19,12 +19,23 @@
 ##' o$addTear(c(9, 10, 11))
 ##' o$addTear(c(12, 1, 2))
 ##' flatplot(o)
+##'
+##' P <- list(rbind(c(1,1), c(2,1), c(2.5,2), c(3,1), c(4,1), c(1,4)),
+##'               rbind(c(-1,1), c(-1,4), c(-2,3), c(-2,2), c(-3,2), c(-4,1)),
+##'               rbind(c(-4,-1), c(-1,-1), c(-1,-4)),
+##'               rbind(c(1,-1), c(2,-1), c(2.5,-2), c(3,-1), c(4,-1), c(1,-4)))
+##' o <- TriangulatedOutline$new(P)
+##' ##' o$addTear(c(2, 3, 4))
+##' o$addTear(c(17, 18, 19))
+##' o$addTear(c(9, 10, 11))
+##' o$addFullCut(c(1, 5, 16, 20))
+##' flatplot(o)
 TriangulatedOutline <- R6Class("TriangulatedOutline",
   inherit = AnnotatedOutline,
   public = list(
-    ##' @field T 3 column matrix in which each row contains IDs of
+    ##' @field Tr 3 column matrix in which each row contains IDs of
     ##'   points of each triangle
-    T =  matrix(NA, 0, 3),
+    Tr = matrix(NA, 0, 3),
     ##' @field A Area of each triangle in the mesh - has same number of
     ##'   elements as there are rows of \code{T}
     A = NULL,
@@ -42,21 +53,23 @@ TriangulatedOutline <- R6Class("TriangulatedOutline",
     ##'   whether to insert external Steiner points - see
     ##'   \link{TriangulatedFragment}
     triangulate = function(n=200, suppress.external.steiner=FALSE) {
-      self$T <- matrix(NA, 0, 3)
+      self$Tr <- matrix(NA, 0, 3)
       self$Cu <- matrix(NA, 0, 2)
-      t <- TriangulatedFragment$new(self,
-                                    n=n,
-                                    suppress.external.steiner=suppress.external.steiner,
-                                    report=report)
-      pids <- self$addPoints(t$P)
-      if (length(t$gf) != length(pids)) {
-        stop("Number of indices is not equal to number of pids supplied")
+      for (fid in self$getFragmentIDs()) {
+        fragment <- self$getFragment(fid)
+        t <- TriangulatedFragment$new(fragment,
+                                      n=ceiling(n*self$A.fragments[fid]/sum(self$A.fragments)),
+                                      suppress.external.steiner=suppress.external.steiner,
+                                      report=report)
+        pids <- self$addPoints(t$P, fid)
+        if (length(t$gf) != length(pids)) {
+          stop("Number of fragment indices being mapped is not equal to number of pids supplied")
+        }
+        self$mapTriangulatedFragment(t, pids)
       }
-      self$mapTriangulatedFragment(t, pids)
-
       ## Find areas and lengths of connections
       P <- self$getPointsScaled()
-      self$A <- tri.area(cbind(P, 0), self$T)
+      self$A <- tri.area(P, self$Tr)
       self$L <- vecnorm(P[self$Cu[,1],] - P[self$Cu[,2],])
       self$A.tot <- sum(self$A)
     },
@@ -66,8 +79,8 @@ TriangulatedOutline <- R6Class("TriangulatedOutline",
     ##' @param pids Point IDs in TriangulatedOutline of points in \link{TriangulatedFragment}
     mapTriangulatedFragment = function(fragment, pids) {
       self$mapFragment(fragment, pids)
-      if (!is.null(fragment$T)) {
-        self$T <-  rbind(self$T,  matrix(pids[fragment$T], ncol=3))
+      if (!is.null(fragment$Tr)) {
+        self$Tr <-  rbind(self$Tr,  matrix(pids[fragment$Tr], ncol=3))
         self$Cu <- rbind(self$Cu, matrix(pids[fragment$Cu], ncol=2))
       }
     }
@@ -91,22 +104,21 @@ flatplot.TriangulatedOutline <- function(x, axt="n",
                                          ...) {
   NextMethod()
 
-  if (mesh) 
-    trimesh(x$T, x$P, col="grey", add=TRUE)
+  if (mesh)
+    trimesh(x$Tr, x$P, col="grey", add=TRUE)
 }
 
-##' @import rgl
+##' @rawNamespace import(rgl, except = triangulate)
 ##' @method depthplot3D TriangulatedOutline
 ##' @export
 depthplot3D.TriangulatedOutline <- function(r, ...) {
-  rgl.clear()
-  if (nrow(r$T) == 0) {
+  clear3d()
+  if (nrow(r$Tr) == 0) {
     warning("Outline not yet triangulated - no depthplot will show")
   }
   P <- r$getPointsScaled()
-  triangles3d(matrix(P[t(r$T),"X"], nrow=3),
-              matrix(P[t(r$T),"Y"], nrow=3),
-              matrix(P[t(r$T),"Z"], nrow=3),
+  triangles3d(matrix(P[t(r$Tr),"X"], nrow=3),
+              matrix(P[t(r$Tr),"Y"], nrow=3),
+              matrix(P[t(r$Tr),"Z"], nrow=3),
               color="red", alpha=1)
 }
-

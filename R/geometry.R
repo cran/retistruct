@@ -1,19 +1,19 @@
 ##
 ## Geometry functions
-## 
+##
 
-extprod3d <- function (x, y) 
+extprod3d <- function (x, y)
 {
     x <- matrix(x, ncol = 3)
     y <- matrix(y, ncol = 3)
-    return(cbind(x[, 2] * y[, 3] - x[, 3] * y[, 2], x[, 3] * y[, 
-        1] - x[, 1] * y[, 3], x[, 1] * y[, 2] - x[, 2] * y[, 
+    return(cbind(x[, 2] * y[, 3] - x[, 3] * y[, 2], x[, 3] * y[,
+        1] - x[, 1] * y[, 3], x[, 1] * y[, 2] - x[, 2] * y[,
                                                            1]))
 }
 
 
 ##' Vector norm
-##' @param X Vector or matrix. 
+##' @param X Vector or matrix.
 ##' @return If a vector, returns the 2-norm  of the
 ##' vector. If a matrix, returns the 2-norm of each row of the matrix
 ##' @author David Sterratt
@@ -28,20 +28,20 @@ vecnorm <- function(X) {
 
 ##' "Signed area" of triangles on a plane
 ##' @param P 3-column matrix of vertices of triangles
-##' @param Pt 3-column matrix of indices of rows of \code{P} giving
+##' @param Tr 3-column matrix of indices of rows of \code{P} giving
 ##' triangulation
 ##' @return Vectors of signed areas of triangles. Positive sign
 ##' indicates points are anticlockwise direction; negative indicates
 ##' clockwise.
 ##' @author David Sterratt
 ##' @export
-tri.area.signed <- function(P, Pt) {
+tri.area.signed <- function(P, Tr) {
   if (ncol(P) != 3) {
     stop("P must have 3 columns")
   }
-  A <- P[Pt[,1],,drop=FALSE] 
-  B <- P[Pt[,2],,drop=FALSE]
-  C <- P[Pt[,3],,drop=FALSE]
+  A <- P[Tr[,1],,drop=FALSE]
+  B <- P[Tr[,2],,drop=FALSE]
+  C <- P[Tr[,3],,drop=FALSE]
   AB <- B - A
   BC <- C - B
   vp <- extprod3d(AB, BC)
@@ -50,23 +50,23 @@ tri.area.signed <- function(P, Pt) {
 
 ##' Area of triangles on a plane
 ##' @param P 3-column matrix of vertices of triangles
-##' @param Pt 3-column matrix of indices of rows of \code{P} giving
+##' @param Tr 3-column matrix of indices of rows of \code{P} giving
 ##' triangulation
 ##' @return Vectors of areas of triangles
 ##' @author David Sterratt
 ##' @export
-tri.area <- function(P, Pt) {
-  return(abs(tri.area.signed(P, Pt)))
+tri.area <- function(P, Tr) {
+  return(abs(tri.area.signed(P, Tr)))
 }
 
 ##' This uses L'Hullier's theorem to compute the spherical excess and
 ##' hence the area of the spherical triangle.
-##' 
+##'
 ##' @title Area of triangles on a sphere
 ##' @param P 2-column matrix of vertices of triangles given in
 ##' spherical polar coordinates. Columns need to be labelled
 ##' \code{phi} (latitude) and \code{lambda} (longitude).
-##' @param Pt 3-column matrix of indices of rows of \code{P} giving
+##' @param Tr 3-column matrix of indices of rows of \code{P} giving
 ##' triangulation
 ##' @return Vectors of areas of triangles in units of steradians
 ##' @source Wolfram MathWorld
@@ -76,31 +76,31 @@ tri.area <- function(P, Pt) {
 ##' @examples
 ##' ## Something that should be an eighth of a sphere, i.e. pi/2
 ##' P <- cbind(phi=c(0, 0, pi/2), lambda=c(0, pi/2, pi/2))
-##' Pt <- cbind(1, 2, 3)
+##' Tr <- cbind(1, 2, 3)
 ##' ## The result of this should be 0.5
-##' print(sphere.tri.area(P, Pt)/pi)
+##' print(sphere.tri.area(P, Tr)/pi)
 ##'
 ##' ## Now a small triangle
 ##' P1 <- cbind(phi=c(0, 0, 0.01), lambda=c(0, 0.01, 0.01))
-##' Pt1 <- cbind(1, 2, 3)
+##' Tr1 <- cbind(1, 2, 3)
 ##' ## The result of this should approximately 0.01^2/2
-##' print(sphere.tri.area(P, Pt)/(0.01^2/2))
+##' print(sphere.tri.area(P, Tr)/(0.01^2/2))
 ##'
-##' ## Now check that it works for both 
+##' ## Now check that it works for both
 ##' P <- rbind(P, P1)
-##' Pt <- rbind(1:3, 4:6)
+##' Tr <- rbind(1:3, 4:6)
 ##' ## Should have two components
-##' print(sphere.tri.area(P, Pt))
+##' print(sphere.tri.area(P, Tr))
 ##' @export
-sphere.tri.area <- function(P, Pt) {
+sphere.tri.area <- function(P, Tr) {
   ## Get lengths of sides of all triangles
-  a <- central.angle(P[Pt[,1],"phi"], P[Pt[,1],"lambda"],
-                     P[Pt[,2],"phi"], P[Pt[,2],"lambda"])
-  b <- central.angle(P[Pt[,2],"phi"], P[Pt[,2],"lambda"],
-                     P[Pt[,3],"phi"], P[Pt[,3],"lambda"])
-  c <- central.angle(P[Pt[,3],"phi"], P[Pt[,3],"lambda"],
-                     P[Pt[,1],"phi"], P[Pt[,1],"lambda"])
-  
+  a <- central.angle(P[Tr[,1],"phi"], P[Tr[,1],"lambda"],
+                     P[Tr[,2],"phi"], P[Tr[,2],"lambda"])
+  b <- central.angle(P[Tr[,2],"phi"], P[Tr[,2],"lambda"],
+                     P[Tr[,3],"phi"], P[Tr[,3],"lambda"])
+  c <- central.angle(P[Tr[,3],"phi"], P[Tr[,3],"lambda"],
+                     P[Tr[,1],"phi"], P[Tr[,1],"lambda"])
+
   ## Semiperimeter is half perimeter
   s <- 1/2*(a + b + c)
 
@@ -112,8 +112,8 @@ sphere.tri.area <- function(P, Pt) {
 
 ##' Determine the intersection of two lines L1 and L2 in two dimensions,
 ##' using the formula described by Weisstein.
-##' 
-##' @title Determine intersection between two lines 
+##'
+##' @title Determine intersection between two lines
 ##' @param P1 vector containing x,y coordinates of one end of L1
 ##' @param P2 vector containing x,y coordinates of other end of L1
 ##' @param P3 vector containing x,y coordinates of one end of L2
@@ -154,12 +154,12 @@ line.line.intersection <- function(P1, P2, P3, P4, interior.only=FALSE) {
   }
   D1 <- det(rbind(P1, P2))
   D2 <- det(rbind(P3, P4))
-  
+
   X <- det(rbind(c(D1, dx1),
                  c(D2, dx2)))/D
   Y <- det(rbind(c(D1, dy1),
                  c(D2, dy2)))/D
-  
+
   if (interior.only) {
     ## Compute the fractions of L1 and L2 at which the intersection
     ## occurs
@@ -173,9 +173,9 @@ line.line.intersection <- function(P1, P2, P3, P4, interior.only=FALSE) {
   return(c(X, Y))
 }
 
-##' This is similar to unique(), but spares rows which are duplicated, but 
+##' This is similar to unique(), but spares rows which are duplicated, but
 ##' at different points in the matrix
-##' 
+##'
 ##' @title Remove identical consecutive rows from a matrix
 ##' @param P Source matrix
 ##' @return Matrix with identical consecutive rows removed.
@@ -324,15 +324,15 @@ sphere.spherical.to.sphere.cart <- function(Ps, R=1) {
 
 ##' Given a triangular mesh on a sphere described by mesh locations
 ##' (\code{phi}, \code{lambda}), a radius \code{R} and a triangulation
-##' \code{Tt}, determine the Cartesian coordinates of points \code{cb}
+##' \code{Trt}, determine the Cartesian coordinates of points \code{cb}
 ##' given in barycentric coordinates with respect to the mesh.
 ##'
 ##' @title Convert barycentric coordinates of points in mesh on sphere
-##' to cartesian coordinates 
+##' to cartesian coordinates
 ##' @param phi Latitudes of mesh points
 ##' @param lambda Longitudes of mesh points
-##' @param R Radius of sphere 
-##' @param Tt Triangulation
+##' @param R Radius of sphere
+##' @param Trt Triangulation
 ##' @param cb Object returned by tsearch containing information on the
 ##' triangle in which a point occurs and the barycentric coordinates
 ##' within that triangle
@@ -340,7 +340,7 @@ sphere.spherical.to.sphere.cart <- function(Ps, R=1) {
 ##' @author David Sterratt
 ##' @importFrom geometry bary2cart
 ##' @export
-bary.to.sphere.cart <- function(phi, lambda, R, Tt, cb) {
+bary.to.sphere.cart <- function(phi, lambda, R, Trt, cb) {
   ## Initialise output
   cc <- matrix(NA, nrow(cb$p), 3)
   colnames(cc) <- c("X", "Y", "Z")
@@ -353,24 +353,24 @@ bary.to.sphere.cart <- function(phi, lambda, R, Tt, cb) {
   ## Find 3D coordinates of mesh points
   P <- sphere.spherical.to.sphere.cart(cbind(phi=phi, lambda=lambda), R)
 
-  ## Now find locations cc of datapoints in Cartesian coordinates  
+  ## Now find locations cc of datapoints in Cartesian coordinates
   for(i in 1:nrow(cb$p)) {
-    cc[i,] <- bary2cart(P[Tt[cb$idx[i],],], cb$p[i,])
+    cc[i,] <- bary2cart(P[Trt[cb$idx[i],],], cb$p[i,])
   }
   return(cc)
 }
 
 ##' Convert locations on the surface of a sphere in cartesian
-##' (X, Y, Z) coordinates to spherical (phi, lambda) coordinates. 
+##' (X, Y, Z) coordinates to spherical (phi, lambda) coordinates.
 ##'
 ##' It is assumed that all points are lying on the surface of a sphere
 ##' of radius R.
 ##' @title Convert from Cartesian to spherical coordinates
 ##' @param P locations of points on sphere as N-by-3 matrix with
 ##' labelled columns "X", "Y" and "Z"
-##' @param R radius of sphere 
+##' @param R radius of sphere
 ##' @return N-by-2 Matrix with columns ("phi" and "lambda") of
-##' locations of points in spherical coordinates 
+##' locations of points in spherical coordinates
 ##' @author David Sterratt
 ##' @export
 sphere.cart.to.sphere.spherical <- function(P, R=1) {
@@ -388,7 +388,7 @@ sphere.cart.to.sphere.spherical <- function(P, R=1) {
 ##' \cos\phi' d\phi' = \int_0^{\rho} \rho' d\rho'}.  Solving gives
 ##' \eqn{\rho^2/2=R^2(\sin\phi+1)} and hence
 ##' \deqn{\rho=R\sqrt{2(\sin\phi+1)}}.
-##' 
+##'
 ##' As a check, consider that total area needs to be preserved.  If
 ##' \eqn{\rho_0} is maximum value of new variable then
 ##' \eqn{A=2\pi R^2(\sin(\phi_0)+1)=\pi\rho_0^2}. So
@@ -520,14 +520,12 @@ azel.to.sphere.colatitude <- function(r, r0) {
               cbind(-sin(r0[,"alpha"])*sin(r0[,"theta"]),
                     -sin(r0[,"alpha"])*cos(r0[,"theta"]),
                      cos(r0[,"alpha"]))) %*% t(rc)
-  print(r0c)
-  print(rc)
-  print(t(pc))
+
   lambdap <- atan2(pc[2,], pc[1,])
 
   out <- cbind(psi, lambdap)
   colnames(out) <- c("psi", "lambda")
-  
+
   return(out)
 }
 
@@ -568,7 +566,7 @@ rotate.axis <- function(r, r0) {
                      c(0, -sin(dp), cos(dp)))
     ## This will have taken the North pole to (0, -90). Hence we need to
     ## rotate by another 90 degrees to get to where we want to.
-    
+
     ## Then rotate about the z-axis
     dl <- r0[,"lambda"] + pi/2
     P <- P %*% rbind(c( cos(dl), sin(dl), 0),
@@ -598,7 +596,7 @@ normalise.angle <- function(theta) {
 ##' @param psi vector of slice angles of N points
 ##' @param f vector of fractional distances of N points
 ##' @param phi0 rim angle as colatitude
-##' @param R radius of sphere 
+##' @param R radius of sphere
 ##' @return An N-by-3 matrix in which each row is the cartesian (X, Y,
 ##' Z) coordinates of each point
 ##' @export
@@ -627,7 +625,7 @@ sphere.wedge.to.sphere.cart <- function(psi, f, phi0, R=1) {
 ##' @param P locations of points on sphere as N-by-3 matrix with
 ##' labelled columns "X", "Y" and "Z"
 ##' @param phi0 rim angle as colatitude
-##' @param R radius of sphere 
+##' @param R radius of sphere
 ##' @return 2-column Matrix of 'wedge' coordinates of points on
 ##' sphere. Column names are \code{phi} and \code{lambda}.
 ##' @export
@@ -638,8 +636,8 @@ sphere.cart.to.sphere.wedge <- function(P, phi0, R=1) {
   ## a sphere; they lie on the triangles that approximate the sphere.
   Rs <- sqrt(rowSums(P^2))
   if (any(abs(Rs - R)/R > 0.1)) {
-    print(abs(Rs - R)/R)
-    stop("Points do not lie approximately on unit sphere")
+    stop(paste("Points do not lie approximately on unit sphere:\n",
+               paste(capture.output(print(abs(Rs - R)/R)), collapse='\n')))
   }
   ## Normalise to unit sphere
   P <- P/Rs
@@ -663,8 +661,8 @@ sphere.cart.to.sphere.wedge <- function(P, phi0, R=1) {
   rownames(Pw) <- NULL
   ## Check that f is in bounds
   if (any(f > 1) || any(f < 0)) {
-    print(Pw)
-    stop("f is out of bounds")
+    stop(paste("f is out of bounds:\n",
+               paste(capture.output(print(Pw)), collapse='\n')))
   }
   return(Pw)
 }
@@ -680,7 +678,7 @@ sphere.cart.to.sphere.wedge <- function(P, phi0, R=1) {
 ##' @param P locations of points on sphere as N-by-3 matrix with
 ##' labelled columns \code{X}, \code{Y} and \code{Z}
 ##' @param phi0 rim angle as colatitude
-##' @param R radius of sphere 
+##' @param R radius of sphere
 ##' @return 2-column Matrix of \sQuote{wedge} coordinates of points on
 ##' sphere. Column names are \code{phi} and \code{lambda}.
 ##' @export
@@ -708,7 +706,7 @@ sphere.cart.to.sphere.dualwedge <- function(P, phi0, R=1) {
 ##' @param phi2 Latitude of second point
 ##' @param lambda2 Longitude of second point
 ##' @return Central angle
-##' @source Wikipedia \url{http://en.wikipedia.org/wiki/Central_angle}
+##' @source Wikipedia \url{https://en.wikipedia.org/wiki/Central_angle}
 ##' @author David Sterratt
 ##' @export
 central.angle <- function(phi1, lambda1, phi2, lambda2) {
@@ -722,7 +720,7 @@ central.angle <- function(phi1, lambda1, phi2, lambda2) {
 ##'
 ##' @title Karcher mean on the sphere
 ##' @param x Matrix of points on sphere as N-by-2 matrix with labelled
-##' columns \\code{phi} (latitude) and \code{lambda} (longitude)
+##' columns \code{phi} (latitude) and \code{lambda} (longitude)
 ##' @param na.rm logical value indicating whether \code{NA} values should
 ##' be stripped before the computation proceeds.
 ##' @param var logical value indicating whether variance should be
@@ -839,4 +837,3 @@ parabola.invarclength <- function(x1, s, f) {
     uniroot(function(x) {parabola.arclength(x1, x, f) - s}, c(x1, x1 + s + 1))$root
   })
 }
-

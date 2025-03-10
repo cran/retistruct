@@ -1,8 +1,8 @@
 ##' This calls \code{\link{retistruct.cli.process}} with a time limit
 ##' specified by \code{cpu.time.limit}.
-##' 
+##'
 ##' @title Process a dataset with a time limit
-##' @param dataset Path to dataset to process 
+##' @param dataset Path to dataset to process
 ##' @param cpu.time.limit Time limit in seconds
 ##' @param outputdir Directory in which to save any figures
 ##' @param device String representing device to print figures to
@@ -33,7 +33,7 @@ retistruct.cli <- function(dataset, cpu.time.limit=Inf, outputdir=NA,
     }
   }
   ## Success
-  return(list(status=status, time=syst["user.self"], mess=mess))
+  return(list(status=status, time=syst["user.self"], mess=mess, r=out))
 }
 
 ##' This function processes a \code{dataset}, saving the
@@ -41,36 +41,43 @@ retistruct.cli <- function(dataset, cpu.time.limit=Inf, outputdir=NA,
 ##' directory and printing figures to \code{outputdir}.
 ##'
 ##' @title Process a dataset, saving results to disk
-##' @param dataset Path to dataset to process 
+##' @param dataset Path to dataset to process
 ##' @param outputdir Directory in which to save any figures
 ##' @param device String representing device to print figures to
+##' @param titrate Whether to titrate or not
+##' @param matlab Whether to save to MATLAB or not
 ##' @author David Sterratt
 ##' @export
-retistruct.cli.process <- function(dataset, outputdir=NA, device="pdf"
-                                   ## titrate=FALSE   ## FIXME: Issue #25: Titration
-                                   ) {
+retistruct.cli.process <- function(dataset, outputdir=NA, device="pdf",
+                                   titrate=FALSE, matlab=TRUE) {
+  ## Ensure options are reset on exit
+  oldop <- options()
+  on.exit(options(oldop))
+
   ## Processing
-  warn.opt <- getOption("warn")
   options(warn=1)
   r <- retistruct.read.dataset(dataset)
   r <- retistruct.read.markup(r)
   r <- retistruct.reconstruct(r)
-  ## FIXME: Issue #25: Titration
-  ## if (titrate) {
-  ##   r$titration <- titrate.reconstructedOutline(r)
-  ## }
+  if (titrate) {
+    r$titrate()
+  }
+
   ## Output
   retistruct.save.recdata(r)
-  
+
   if (!is.na(outputdir)) {
     message("Producing figures")
     retistruct.cli.figure(dataset, outputdir, device=device)
   }
 
   ## Export to matlab
-  message("Exporting to matlab")
-  retistruct.export.matlab(r)
-  options(warn=warn.opt)
+  if (matlab) {
+    message("Exporting to matlab")
+    retistruct.export.matlab(r)
+  }
+
+  return(r)
 }
 
 ## retistruct.cli.basepath - generate a path based on the elided directory name
@@ -83,7 +90,7 @@ retistruct.cli.basepath <- function(dataset) {
 }
 
 ##' Print a figure to file
-##' @param dataset Path to dataset to process 
+##' @param dataset Path to dataset to process
 ##' @param outputdir Directory in which to save any figures
 ##' @param device String representing device to print figures to
 ##' @param width Width of figures in inches
@@ -96,6 +103,10 @@ retistruct.cli.basepath <- function(dataset) {
 retistruct.cli.figure <- function(dataset,
                                   outputdir, device="pdf", width=6, height=6,
                                   res=100) {
+  ## Ensure graphics paremeters are reset on exit
+  oldpar <- par(no.readonly=TRUE)
+  on.exit(par(oldpar))
+
   suppressMessages(r <- retistruct.read.recdata(list(dataset=dataset), check=FALSE))
   units <- NULL
   if (device!="pdf") {
@@ -114,7 +125,7 @@ retistruct.cli.figure <- function(dataset,
   if (!is.null(r)) {
     ## Determine the name of a figure
     basepath <- retistruct.cli.basepath(dataset)
-    
+
     ## Flat plot
     dev(file=file.path(outputdir, paste(basepath, "-flat", suffix, sep="")),
            width=width, height=height)
@@ -152,7 +163,7 @@ retistruct.cli.figure <- function(dataset,
     }
     dev.off()
 
-    
+
     ## Strain plot
     dev(file=file.path(outputdir, paste(basepath, "-strain", suffix, sep="")),
            width=width, height=height)
@@ -174,7 +185,7 @@ retistruct.cli.figure <- function(dataset,
     par(mar=c(3.0, 3.0, 1.5, 0.5))
     par(mgp=c(1.5, 0.5, 0))
     par(tcl=-0.3)
-    
+
     lvsLplot(r)
     title(dataset)
     dev.off()

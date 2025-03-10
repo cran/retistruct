@@ -23,7 +23,7 @@
 ##' \code{conv}, which is 0 if convergence as occurred and 1 otherwise,
 ##' and \code{frms}, the root mean square of the forces on the
 ##' particles.
-##' @references Bitzek, E., Koskinen, P., G\"{a}hler, F., Moseler, M.,
+##' @references Bitzek, E., Koskinen, P., Gähler, F., Moseler, M.,
 ##' and Gumbsch, P. (2006). Structural relaxation made
 ##' simple. Phys. Rev. Lett., 97:170201.
 ##' @author David Sterratt
@@ -33,7 +33,7 @@ fire <- function(r, force, restraint, m=1, dt=0.1, maxmove=1E2, dtmax=1,
   Nsteps <- 0
   conv <- 1
   # Initialise velocity
-  v <- 0*r                              
+  v <- 0*r
   dt <- min(dt, dtmax)
 
   ## Counters for number of stops and hits of dtmax and maxmove
@@ -44,9 +44,7 @@ fire <- function(r, force, restraint, m=1, dt=0.1, maxmove=1E2, dtmax=1,
   for (i in 1:nstep) {
     f <- force(r)
     frad2 <- dot(f, r/vecnorm(r), 2)^2
-    ## print(frad2)
     ftan2 <- dot(f, f, 2) - frad2
-    ##print(ftan2)
     frms <- sqrt(mean(dot(f, f, 2)))
     ftanrms <- sqrt(mean(ftan2))
     if (ftanrms < tol) {
@@ -59,7 +57,7 @@ fire <- function(r, force, restraint, m=1, dt=0.1, maxmove=1E2, dtmax=1,
       v <- (1 - a)*v + a*f/vecnorm(f)*vecnorm(v)
       if (Nsteps > Nmin) {
         dt <- min(dt*finc, dtmax)
-        if (dt==dtmax) ndtmax <- ndtmax + 1 
+        if (dt==dtmax) ndtmax <- ndtmax + 1
         a <- a*fa
       }
       Nsteps <- Nsteps + 1
@@ -92,4 +90,3 @@ fire <- function(r, force, restraint, m=1, dt=0.1, maxmove=1E2, dtmax=1,
   }
   return(list(x=r, conv=conv, frms=frms))
 }
-

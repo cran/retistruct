@@ -1,17 +1,14 @@
 ##' Plot "flat" (unreconstructed) representation of outline
 ##' @param x \code{\link{Outline}}, \code{\link{AnnotatedOutline}},  \code{\link{StitchedOutline}} &c object
-##' @param axt whether to plot axes
-##' @param xlim x limits
-##' @param ylim y limits
 ##' @param ... Other plotting parameters
 ##' @author David Sterratt
 ##' @export
-flatplot <- function(x, axt="n", xlim=NULL, ylim=NULL, ...) {
+flatplot <- function(x, ...) {
   UseMethod("flatplot")
 }
 
 ##' @export
-flatplot.default <- function(x, axt="n", xlim=NULL, ylim=NULL, ...) {
+flatplot.default <- function(x, ...) {
 }
 
 ##' Plot projection of a reconstructed outline
@@ -39,11 +36,11 @@ sphericalplot <- function(r, ...) {
 
 ##' @export
 sphericalplot.default <- function(r, ...) {
-  rgl.clear()
-  rgl.bg(color="white")
+  clear3d()
+  bg3d(color="white")
 }
 
-##' Draw the "flat" outline in 3D with depth information 
+##' Draw the "flat" outline in 3D with depth information
 ##' @param r \code{\link{TriangulatedOutline}} object
 ##' @param ... Parameters depending on class of \code{r}
 ##' @author David Sterratt
@@ -58,7 +55,7 @@ depthplot3D.default <- function(r, ...) {
 
 
 ##' Plot the fractional change in length of mesh edges
-##' 
+##'
 ##' Plot the fractional change in length of mesh edges. The length of
 ##' each edge in the mesh in the reconstructed object is plotted
 ##' against each edge in the spherical object. The points are
@@ -75,4 +72,3 @@ lvsLplot <- function(r, ...) {
 ##' @export
 lvsLplot.default <- function(r, ...) {
 }
-

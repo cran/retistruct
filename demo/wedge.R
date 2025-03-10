@@ -12,4 +12,4 @@ gc <- rbind(gc, cbind(psi=as.vector(t(gpsis)), f=as.vector(t(gfs))))
 
 P <- sphere.wedge.to.sphere.cart(gc[,"psi"], gc[,"f"], phi0=135*pi/180)
 points3d(P[,"X"], P[,"Y"], P[,"Z"])
-lines3d(P[,"X"], P[,"Y"], P[,"Z"])
+segments3d(P[,"X"], P[,"Y"], P[,"Z"])

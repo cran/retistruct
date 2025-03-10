@@ -13,7 +13,7 @@
 ##' @param ... Arguments not used by this projection.
 ##' @return Two-column matrix with columns labelled \code{x} and
 ##' \code{y} of locations of projection of coordinates on plane
-##' @references \url{http://en.wikipedia.org/wiki/Map_projection},
+##' @references \url{https://en.wikipedia.org/wiki/Map_projection},
 ##' \url{http://mathworld.wolfram.com/SinusoidalProjection.html}
 ##' @author David Sterratt
 ##' @export
@@ -45,7 +45,7 @@ sinusoidal <- function(r, proj.centre=cbind(phi=0, lambda=0),
 ##' @param ... Arguments not used by this projection.n
 ##' @return Two-column matrix with columns labelled \code{x} and
 ##' \code{y} of locations of projection of coordinates on plane
-##' @references \url{http://en.wikipedia.org/wiki/Map_projection},
+##' @references \url{https://en.wikipedia.org/wiki/Map_projection},
 ##' \url{http://mathworld.wolfram.com/OrthographicProjection.html}
 ##' @author David Sterratt
 ##' @export
@@ -57,7 +57,7 @@ orthographic <- function(r,
   }
   lambda0 <- proj.centre[1, "lambda"]
   phi0    <- proj.centre[1, "phi"]
-  
+
   ## First translate to Cartesian coordinates with only the rotation
   ## about the polar axis so that (0, lambda0) is at the centre of the
   ## projection.
@@ -70,7 +70,7 @@ orthographic <- function(r,
   P <- P %*% rbind(c(1, 0, 0),
                    c(0,  cos(phi0), sin(phi0)),
                    c(0, -sin(phi0), cos(phi0)))
-  
+
   ## Projection onto the x-y plane
   rc <- cbind(x=P[, 1], y=P[, 2])
 
@@ -89,7 +89,7 @@ orthographic <- function(r,
 ##' @note This is a special case with the point centred on the
 ##' projection being the South Pole. The MathWorld equations are for
 ##' the more general case.
-##' @references \url{http://en.wikipedia.org/wiki/Map_projection},
+##' @references \url{https://en.wikipedia.org/wiki/Map_projection},
 ##' \url{http://mathworld.wolfram.com/LambertAzimuthalEqual-AreaProjection.html}
 ##' Fisher, N. I., Lewis, T., and Embleton,
 ##' B. J. J. (1987). Statistical analysis of spherical data. Cambridge
@@ -115,8 +115,8 @@ azimuthal.equalarea <- function(r, ...) {
 ##' @note This is a special case with the point centred on the
 ##' projection being the South Pole. The MathWorld equations are for
 ##' the more general case.
-##' @references \url{http://en.wikipedia.org/wiki/Map_projection},
-##' \url{http://mathworld.wolfram.com/AzimuthalEquidistantProjection.html}  
+##' @references \url{https://en.wikipedia.org/wiki/Map_projection},
+##' \url{http://mathworld.wolfram.com/AzimuthalEquidistantProjection.html}
 ##' @export
 azimuthal.equidistant <- function(r, ...) {
   if (is.character(r) & identical(r, "boundary")) {
@@ -138,7 +138,7 @@ azimuthal.equidistant <- function(r, ...) {
 ##' @note This is a special case with the point centred on the
 ##' projection being the South Pole. The MathWorld equations are for
 ##' the more general case.
-##' @references \url{http://en.wikipedia.org/wiki/Map_projection},
+##' @references \url{https://en.wikipedia.org/wiki/Map_projection},
 ##' \url{http://mathworld.wolfram.com/StereographicProjection.html}
 ##' Fisher, N. I., Lewis, T., and Embleton,
 ##' B. J. J. (1987). Statistical analysis of spherical data. Cambridge
@@ -153,4 +153,3 @@ azimuthal.conformal <- function(r, ...) {
   y <- rho*sin(r[,"lambda"])
   return(cbind(x=x, y=y))
 }
-

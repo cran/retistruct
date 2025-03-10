@@ -10,13 +10,14 @@ retistruct.reconstruct(
   plot.3d = FALSE,
   dev.flat = NA,
   dev.polar = NA,
+  shinyOutput = NULL,
   debug = FALSE,
   ...
 )
 }
 \arguments{
 \item{a}{\code{\link{RetinalOutline}} object with tear and
-correspondence annotations}
+cut annotations}
 
 \item{report}{Function to report progress. Set to \code{FALSE} for
 no reporting or to \code{NULL} to inherit from the argument given to \code{\link{retistruct.read.dataset}}}
@@ -28,6 +29,9 @@ representation}
 
 \item{dev.polar}{The ID of the device to which to plot the polar
 representation}
+
+\item{shinyOutput}{A Shiny output element used to render and display a
+plot in the application.}
 
 \item{debug}{If \code{TRUE} print extra debugging output}
 

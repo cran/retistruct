@@ -7,7 +7,7 @@
 ##'   which has columns labelled \code{phi} (latitude) and
 ##'   \code{lambda} (longitude) describing the spherical coordinates
 ##'   of points on the ReconstructedOutline.
-##' 
+##'
 ##' @author David Sterratt
 ##' @importFrom geometry delaunayn
 ##' @export
@@ -15,6 +15,8 @@ ReconstructedLandmarkSet <- R6Class("ReconstructedLandmarkSet",
   inherit = ReconstructedFeatureSet
 )
 
+##' @method projection ReconstructedLandmarkSet
+##' @export
 projection.ReconstructedLandmarkSet <-
   function(r,
            phi0,
@@ -40,5 +42,3 @@ projection.ReconstructedLandmarkSet <-
     }
   }
 }
-
-

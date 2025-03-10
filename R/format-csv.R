@@ -11,7 +11,7 @@ csv.checkDatadir <- function(dir=NULL) {
 ##' \code{\link{read.datacounts}} for the formats of these files. The
 ##' folder may also contain a file \code{od.csv} specifying the
 ##' coordinates of the optic disc.
-##' 
+##'
 ##' @title Read a retinal dataset in CSV format
 ##' @param dataset Path to directory containing \code{outline.csv}
 ##' @param report Function to report progress
@@ -23,10 +23,18 @@ csv.read.dataset <- function(dataset, report=message) {
 
   ## Read scale
   scale <- read.scale(dataset)
-  
+
   ## If there is an image, read it
   im <- read.image(dataset, report=report)
-  
+
+  ## If there is a depth map read it
+  dm <- read.depthmap(dataset)
+  if (!is.null(dm)) {
+    if (!("Z" %in% names(scale))) {
+      stop("\"Z\" must be specified in scale.csv when depthmap is present")
+    }
+  }
+
   ## ImageJ ROI format plots has the coordinate (0, 0) in the top
   ## left.  We have the coordinate (0, 0) in the bottom left. We need
   ## to transform P so that the outline appears in the correct
@@ -34,7 +42,7 @@ csv.read.dataset <- function(dataset, report=message) {
   P <- out
   offset <- ifelse(is.null(im), max(P[,2]), nrow(im))
   P[,2] <- offset - P[,2]
-  
+
   ## Extract datapoints
   ##
   ## At present, for the plotting functions to work, the name of each
@@ -48,7 +56,7 @@ csv.read.dataset <- function(dataset, report=message) {
   Ds <- c(Ds, dat$Ds)
   cols <- c(cols, dat$cols)
   Ds <- lapply(Ds, function(P) {cbind(X=P[,1], Y=(offset - P[,2]))})
-  
+
   ## Extract landmarks (currently optic disc)
   Ss <- list()
 
@@ -71,12 +79,12 @@ csv.read.dataset <- function(dataset, report=message) {
   Gs <- dat$Gs
   cols <- c(cols, dat$cols)
   Gs <- lapply(Gs, function(P) {cbind(P[,1], offset - P[,2], P[,3])})
-  
+
   ## Create forward and backward pointers
-  o <- RetinalOutline$new(P, scale=scale["Scale"], im=im,
-                          units=scale["Units"],
+  o <- RetinalOutline$new(fragments=P, scale=scale[["XY"]], im=im,
+                          scalez=scale[["Z"]], dm=dm, units=scale[["Units"]],
                           dataset=dataset)
-  
+
   ## Check that P is more-or-less closed
   ## if (vecnorm(P[1,] - P[nrow(P),]) > (d.close * diff(range(P[,1])))) {
   ##    stop("Unable to find a closed outline.")

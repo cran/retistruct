@@ -16,6 +16,9 @@ r.high <- retistruct.reconstruct(r.high)
 
 ## Plotting
 x11(width=6.83, height=6.83/2)
+
+oldpar <- par(no.readonly=TRUE) # Save graphics parameters before plotting
+
 par(mfrow=c(2, 4))
 
 ## Good Retina
@@ -53,3 +56,4 @@ panlabel("H")
 ## Printing
 ## dev.print(svg, file="fig2-retistruct-low-high.svg", width=6.83, height=6.83/2)
 
+par(oldpar) # Restore graphics parameters

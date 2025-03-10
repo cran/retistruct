@@ -1,14 +1,3 @@
-## order.Rset(Rset, gf, hf)
-##
-## It is nice to create Rset as an ordered set
-order.Rset <- function(Rset, gf, hf) {
-  ## To to this, join the path from the first two members of the set.
-  R12 <- path(Rset[1], Rset[2], gf, hf)
-  R21 <- path(Rset[2], Rset[1], gf, hf)
-  Rset <- c(R12[-1], R21[-1])
-  return(Rset)
-}
-
 ##' Stretch the mesh in the flat retina to a circular outline
 ##'
 ##' @title Stretch mesh
@@ -38,7 +27,7 @@ stretchMesh <- function(Cu, L, i.fix, P.fix) {
       message(paste("d", d, ":", which(C[d,]==1)))
     }
   }
-  
+
   ind <- as.vector(rbind(2*i.fix-1, 2*i.fix))
   A <- C[-ind, -ind]
   B <- C[-ind,  ind]
@@ -56,7 +45,7 @@ stretchMesh <- function(Cu, L, i.fix, P.fix) {
 
 ##
 ## Energy/error functions
-## 
+##
 
 ## Calculate lengths of connections on sphere
 compute.lengths <- function(phi, lambda, Cu, R) {
@@ -72,13 +61,13 @@ compute.lengths <- function(phi, lambda, Cu, R) {
 
 ## Calculate lengths of connections on sphere
 ##' @importFrom geometry dot
-compute.areas <- function(phi, lambda, T, R) {
+compute.areas <- function(phi, lambda, Tr, R) {
   P <- R * cbind(cos(phi)*cos(lambda),
                  cos(phi)*sin(lambda),
                  sin(phi))
 
   ## Find areas of all triangles
-  areas <- -0.5/R * dot(P[T[,1],], extprod3d(P[T[,2],], P[T[,3],]), 2)
+  areas <- -0.5/R * dot(P[Tr[,1],], extprod3d(P[Tr[,2],], P[Tr[,3],]), 2)
 
   return(areas)
 }
@@ -144,7 +133,7 @@ fp <- function(x, x0) {
 ##' @param C The connectivity matrix
 ##' @param L Length of each edge in the flattened outline
 ##' @param B Connectivity matrix
-##' @param T Triangulation in the flattened outline
+##' @param Tr Triangulation in the flattened outline
 ##' @param A Area of each triangle in the flattened outline
 ##' @param R Radius of the sphere
 ##' @param Rset Indices of points on the rim
@@ -160,7 +149,7 @@ fp <- function(x, x0) {
 ##' @return A single value, representing the energy of this particular
 ##' configuration
 ##' @author David Sterratt
-E <- function(p, Cu, C, L, B, T, A, R, Rset, i0, phi0, lambda0, Nphi, N,
+E <- function(p, Cu, C, L, B, Tr, A, R, Rset, i0, phi0, lambda0, Nphi, N,
               alpha=1, x0,  nu=1, verbose=FALSE) {
   ## Extract phis and lambdas from parameter vector
   phi <- rep(phi0, N)
@@ -174,7 +163,7 @@ E <- function(p, Cu, C, L, B, T, A, R, Rset, i0, phi0, lambda0, Nphi, N,
                  sin(phi))
 
   ## Compute elastic energy
-  return(Ecart(P, Cu, L, T, A, R,
+  return(Ecart(P, Cu, L, Tr, A, R,
                alpha, x0, nu, verbose))
 
 }
@@ -191,7 +180,7 @@ E <- function(p, Cu, C, L, B, T, A, R, Rset, i0, phi0, lambda0, Nphi, N,
 ##' @param C The connectivity matrix
 ##' @param L Length of each edge in the flattened outline
 ##' @param B Connectivity matrix
-##' @param T Triangulation in the flattened outline
+##' @param Tr Triangulation in the flattened outline
 ##' @param A Area of each triangle in the flattened outline
 ##' @param R Radius of the sphere
 ##' @param Rset Indices of points on the rim
@@ -207,7 +196,7 @@ E <- function(p, Cu, C, L, B, T, A, R, Rset, i0, phi0, lambda0, Nphi, N,
 ##' @return A vector representing the derivative of the energy of this
 ##' particular configuration with respect to the parameter vector
 ##' @author David Sterratt
-dE <- function(p, Cu, C, L, B, T, A, R, Rset, i0, phi0, lambda0, Nphi, N,
+dE <- function(p, Cu, C, L, B, Tr, A, R, Rset, i0, phi0, lambda0, Nphi, N,
                alpha=1, x0, nu=1, verbose=FALSE) {
   ## Extract phis and lambdas from parameter vector
   phi <- rep(phi0, N)
@@ -225,7 +214,7 @@ dE <- function(p, Cu, C, L, B, T, A, R, Rset, i0, phi0, lambda0, Nphi, N,
                  sinp)
 
   ## Compute force in Cartesian coordinates
-  dE.dp <- -Fcart(P, C, L, T, A, R,
+  dE.dp <- -Fcart(P, C, L, Tr, A, R,
                   alpha, x0, nu, verbose)
 
   ## Convert to Spherical coordinates
@@ -253,7 +242,7 @@ dE <- function(p, Cu, C, L, B, T, A, R, Rset, i0, phi0, lambda0, Nphi, N,
 ##' @param P N-by-3 matrix of point coordinates
 ##' @param Cu The upper part of the connectivity matrix
 ##' @param L Length of each edge in the flattened outline
-##' @param T Triangulation in the flattened outline
+##' @param Tr Triangulation in the flattened outline
 ##' @param A Area of each triangle in the flattened outline
 ##' @param R Radius of sphere
 ##' @param alpha Area penalty scaling coefficient
@@ -263,7 +252,7 @@ dE <- function(p, Cu, C, L, B, T, A, R, Rset, i0, phi0, lambda0, Nphi, N,
 ##' @return A single value, representing the energy of this particular
 ##' configuration
 ##' @author David Sterratt
-Ecart <- function(P, Cu, L, T, A, R,
+Ecart <- function(P, Cu, L, Tr, A, R,
                   alpha=1, x0, nu=1, verbose=FALSE) {
   ## Compute elastic energy
 
@@ -273,17 +262,17 @@ Ecart <- function(P, Cu, L, T, A, R,
   ## Compute lengths of edges
   ## l <- vecnorm(P2 - P1)
   l <- 2*R*asin(vecnorm(P[Cu[,2],] - P[Cu[,1],])/2/R)
-  if (verbose==2) { print(l) }
+  if (verbose==2) { report(l) }
 
   ## Compute spring energy
   E.E <- 0.5/sum(L)*sum((l - L)^2/L)
-  if (verbose>=1) { print(E.E) }
+  if (verbose>=1) { report(E.E) }
 
   ## Compute areal penalty term if alpha is nonzero
   E.A <- 0
   if (alpha) {
     ## Find signed areas of all triangles
-    a <- -0.5/R * dot(P[T[,1],], extprod3d(P[T[,2],], P[T[,3],]), 2)
+    a <- -0.5/R * dot(P[Tr[,1],], extprod3d(P[Tr[,2],], P[Tr[,3],]), 2)
 
     ## Now compute area energy
     E.A <- sum((A/mean(A))^nu*f(a/A, x0=x0))
@@ -302,7 +291,7 @@ Ecart <- function(P, Cu, L, T, A, R,
 ##' @param P N-by-3 matrix of point coordinates
 ##' @param C The connectivity matrix
 ##' @param L Length of each edge in the flattened outline
-##' @param T Triangulation in the flattened outline
+##' @param Tr Triangulation in the flattened outline
 ##' @param A Area of each triangle in the flattened outline
 ##' @param R Radius of sphere
 ##' @param alpha Area penalty scaling coefficient
@@ -313,14 +302,14 @@ Ecart <- function(P, Cu, L, T, A, R,
 ##' particular configuration with respect to the parameter vector
 ##' @author David Sterratt
 ##' @useDynLib retistruct
-Fcart <- function(P, C, L, T, A, R,
+Fcart <- function(P, C, L, Tr, A, R,
                   alpha=1, x0, nu=1, verbose=FALSE) {
   ## Compute derivative of elastic energy
 
   ## Lengths of springs
   dP <- P[C[,2],] - P[C[,1],]
   l <- 2*R*asin(vecnorm(dP)/2/R)
-  if (verbose==2) { print(l) }
+  if (verbose==2) { report(l) }
 
   ## Compute general scaling factor
   fac <- 1/sum(L)*(l - c(L, L))/c(L, L)/c(L, L) #sqrt(1-(d/2/R)^2)/d
@@ -348,14 +337,14 @@ Fcart <- function(P, C, L, T, A, R,
 
     ## Expand triangulation so that every point is the first point
     ## once. The number of points is effectively tripled.
-    T <- rbind(T, T[,c(2,3,1)], T[,c(3,1,2)])
+    Tr <- rbind(Tr, Tr[,c(2,3,1)], Tr[,c(3,1,2)])
     A <- c(A, A, A)
 
     ## Compute the derivative of area with respect to the first points
-    dAdPt1 <- -0.5/R * extprod3d(P[T[,2],], P[T[,3],])
+    dAdPt1 <- -0.5/R * extprod3d(P[Tr[,2],], P[Tr[,3],])
 
     ## Find areas of all triangles
-    a <- dot(P[T[,1],], dAdPt1, 2)
+    a <- dot(P[Tr[,1],], dAdPt1, 2)
 
     ## Now convert area derivative to energy derivative
     dEdPt1 <- -(A/mean(A))^nu*fp(a/A, x0=x0)/A*dAdPt1
@@ -364,9 +353,9 @@ Fcart <- function(P, C, L, T, A, R,
     ## Map contribution of first vertex of each triangle back onto the
     ## points
     ## for(m in 1:nrow(T)) {
-    ##   dEdpi[T[m,1],] <- dEdpi[T[m,1],] - dEdPt1[m,]
+    ##   dEdpi[Tr[m,1],] <- dEdpi[Tr[m,1],] - dEdPt1[m,]
     ## }
-    dEdpi <- .Call("sum_force_components", -dEdPt1, T, dEdpi , PACKAGE="retistruct")
+    dEdpi <- .Call("sum_force_components", -dEdPt1, Tr, dEdpi , PACKAGE="retistruct")
 
     F.E <- F.E - alpha*dEdpi
   }
@@ -381,7 +370,7 @@ Fcart <- function(P, C, L, T, A, R,
 ##' @param R Radius of sphere
 ##' @param Rset Indices of points on rim
 ##' @param i0 Index of fixed point
-##' @param phi0 Cut-off of curtailed sphere in radians
+##' @param phi0 FullCut-off of curtailed sphere in radians
 ##' @param lambda0 Longitude of fixed point on rim
 ##' @return Points projected back onto sphere
 ##' @author David Sterratt
@@ -412,19 +401,19 @@ Rcart <- function(P, R, Rset, i0, phi0, lambda0) {
 ##'
 ##' @title Determine indices of triangles that are flipped
 ##' @param P Points in Cartesian coordinates
-##' @param Tt Triangulation of points
+##' @param Trt Triangulation of points
 ##' @param R Radius of sphere
 ##' @return List containing:
-##' \item{\code{flipped}}{Indices of in rows of \code{Tt} of flipped triangles.}
+##' \item{\code{flipped}}{Indices of in rows of \code{Trt} of flipped triangles.}
 ##' \item{\code{cents}}{Vectors of centres.}
 ##' \item{\code{areas}}{Areas of triangles.}
 ##' @author David Sterratt
-flipped.triangles.cart <- function(P, Tt, R) {
+flipped.triangles.cart <- function(P, Trt, R) {
   ## Plot any flipped triangles
   ## First find vertices and find centres and normals of the triangles
-  P1 <- P[Tt[,1],]
-  P2 <- P[Tt[,2],]
-  P3 <- P[Tt[,3],]
+  P1 <- P[Trt[,1],]
+  P2 <- P[Trt[,2],]
+  P3 <- P[Trt[,3],]
   cents <- (P1 + P2 + P3)/3
   normals <- 0.5 * extprod3d(P2 - P1, P3 - P2)
 
@@ -443,13 +432,13 @@ flipped.triangles.cart <- function(P, Tt, R) {
 ##' @title Determine indices of triangles that are flipped
 ##' @param Ps N-by-2 matrix with columns containing latitudes
 ##'   (\code{phi}) and longitudes (\code{lambda}) of N points
-##' @param Tt Triangulation of points
+##' @param Trt Triangulation of points
 ##' @param R Radius of sphere
 ##' @return List containing:
-##' \item{\code{flipped}}{Indices of in rows of \code{Tt} of flipped triangles.}
+##' \item{\code{flipped}}{Indices of in rows of \code{Trt} of flipped triangles.}
 ##' \item{\code{cents}}{Vectors of centres.}
 ##' \item{\code{areas}}{Areas of triangles.}
 ##' @author David Sterratt
-flipped.triangles <- function(Ps, Tt, R=1) {
-  return(flipped.triangles.cart(sphere.spherical.to.sphere.cart(Ps, R), Tt, R))
+flipped.triangles <- function(Ps, Trt, R=1) {
+  return(flipped.triangles.cart(sphere.spherical.to.sphere.cart(Ps, R), Trt, R))
 }

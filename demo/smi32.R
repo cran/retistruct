@@ -6,6 +6,7 @@ o <- retistruct.read.dataset(dataset)
 o <- retistruct.read.markup(o)
 
 ## Initial plot
+oldpar <- par(no.readonly=TRUE) # Save graphics parameters before plotting
 par(mar=c(0.1,0.1,0.1,0.1))
 flatplot(o)
 
@@ -20,6 +21,8 @@ par(mar=c(0.1,0.1,0.1,0.1))
 flatplot(r, mesh=FALSE, stitch=FALSE, markup=FALSE)
 
 par(mar=c(1,1,1,1))
-projection(r, mesh=FALSE, stitch=FALSE, markup=FALSE)
+projection(r, mesh=FALSE, markup=FALSE)
 ## To print for PloS Biol.
 ## dev.copy2eps(file="smi32.pdf", width=6.83, height=6.83/2)
+
+par(oldpar) # Restore graphics parameters

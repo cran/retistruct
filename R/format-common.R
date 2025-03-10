@@ -1,11 +1,11 @@
 read.scale <- function(dataset, report=message) {
   ## If there is a scale file, read it
-  scale <- c(Scale=NA, Units=NA)
+  scale <- list(XY=NA, Z=NA, Units=NA)
   scfile <- file.path(dataset, "scale.csv")
   if (file.exists(scfile)) {
     report("Reading scale file")
     sc <- read.csv(scfile)
-    valid.colnames <- c("Scale", "Units")
+    valid.colnames <- c("Scale", "XY", "Z", "Units")
     if (!all(colnames(sc) %in% valid.colnames)) {
       stop(paste("Unknown column names",
                  paste0("\"", setdiff(colnames(sc), valid.colnames), "\"",
@@ -13,12 +13,22 @@ read.scale <- function(dataset, report=message) {
                  "in", scfile, ". Valid column names:",
                  paste(valid.colnames, collapse=", ")))
     }
-    scale <- as.matrix(sc)[1,]
-    if (!("Scale" %in% names(scale)) | !is.numeric(scale["Scale"])) {
+    if ("Scale" %in% colnames(sc)) {
+      scale[["XY"]] <- as.numeric(sc[1, "Scale"])
+      warning("\"Scale\" is deprecated as column header in scale.csv - please use \"XY\" instead")
+      return(scale)
+    }
+    if (is.na(as.numeric(sc[1, "XY"]) | is.na(as.numeric(sc[1, "Z"]))) ) {
       stop("Scale file has not been read correctly. Check it is in the correct format.")
     }
-    if (!("Units" %in% names(scale))) {
-      scale["Units"] <- NA
+    if ("XY" %in% colnames(sc)) {
+      scale[["XY"]] <- as.numeric(sc[1, "XY"])
+    }
+    if ("Z" %in% colnames(sc)) {
+      scale[["Z"]] <- as.numeric(sc[1, "Z"])
+    }
+    if (("Units" %in% colnames(sc))) {
+      scale[["Units"]] <- sc[1, "Units"]
     }
   } else {
     warning("Scale file \"scale.csv\" does not exist. Scale bar will not be set.")
@@ -34,6 +44,28 @@ read.image <- function(dataset, report=message) {
     im <- grDevices::as.raster(png::readPNG(imfile))
   }
   return(im)
+}
+
+read.depthmap <- function(dataset) {
+  dm <- NULL
+  dmfile <- file.path(dataset, "depthmap.tif")
+  if (file.exists(dmfile)) {
+    message("Reading depth map")
+    dm <- tiff::readTIFF(dmfile, as.is=TRUE)
+    dmmarkupfile  <- file.path(dataset, "depthmap.csv")
+    if (file.exists(dmmarkupfile)) {
+      dmmarkup <- read.csv(dmmarkupfile)
+      if ("Background.value" %in% colnames(dmmarkup)) {
+        ## Set coords which have value of "Background" to NA - these will be extrapolated
+        bgval  <- dmmarkup[1, "Background.value"]
+      }
+    } else {
+      bgval <- as.numeric(names(which.max(table(dm))))
+      warning("The background value has been determined to be ", bgval, ". To stop this warning, create a file depthmap.csv, with one column headed \"Background value\" and the value in the \"depthmap.tif\" that should be the background value")
+    }
+    dm[dm == bgval] <- NA
+  }
+  return(dm)
 }
 
 ## Copied from demo("colors")
@@ -66,7 +98,8 @@ plotCol <- function(col, nrow=1, ncol=ceiling(length(col) / nrow),
     invisible(gl)
 }
 
-check.colour <- function(col) {
+
+colour.exists <- function(col) {
   if (!(col %in% grDevices::colours())) {
     plotCol(grep("([0-9]|medium|light|dark)",  grDevices::colors(), invert=TRUE, value=TRUE), nrow=20)
     return(FALSE)
@@ -110,7 +143,7 @@ read.datapoints <- function(dataset) {
       ## Force conversion to matrix, necessary when the data has only
       ## one row
       d <- matrix(d, ncol=2)
-      
+
       ## Any strings (e.g. empty ones) that don't convert will be
       ## converted to NA. Get rid of these.
       d <- na.omit(d)
@@ -118,13 +151,13 @@ read.datapoints <- function(dataset) {
       colnames(d) <- c("X", "Y")
 
       ## Add to lists with appropriate names
-      
+
       D <- list(d)
       names(D) <- names[1]
       Ds <- c(Ds, D)
 
       col <- names[2]
-      if (!(check.colour(col))) {
+      if (!(colour.exists(col))) {
         stop("Invalid colour \"", col, "\" in datapoints.csv - see window for valid colour names")
       }
       names(col) <- names[1]
@@ -171,20 +204,20 @@ read.datacounts <- function(dataset) {
       ## one row
       d <- matrix(d, ncol=3)
       colnames(d) <- c("X", "Y", "C")
-      
+
       ## Any strings (e.g. empty ones) that don't convert will be
       ## converted to NA. Get rid of these.
       d <- na.omit(d)
       attr(d, "na.action") <- NULL
 
       ## Add to lists with appropriate names
-      
+
       G <- list(d)
       names(G) <- names[1]
       Gs <- c(Gs, G)
 
       col <- list(names[2])
-      if (!(check.colour(col))) {
+      if (!(colour.exists(col))) {
         stop("Invalid colour \"", col, "\" in datacounts.csv - see window for valid colour names")
       }
       names(col) <- names[1]

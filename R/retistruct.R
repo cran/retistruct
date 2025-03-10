@@ -1,4 +1,5 @@
-##' Check the whether  directory contains valid data 
+
+##' Check the whether  directory contains valid data
 ##' @param dir Directory to check.
 ##' @return  \code{TRUE} if \code{dir} contains valid data;
 ##' \code{FALSE} otherwise.
@@ -8,6 +9,7 @@ checkDatadir <- function(dir=NULL) {
   if (idt.checkDatadir(dir))   { return("idt") }
   if (csv.checkDatadir(dir))   { return("csv") }
   if (ijroi.checkDatadir(dir)) { return("ijroi") }
+  if (ijroimulti.checkDatadir(dir)) { return("ijroimulti") }
   return(FALSE)
 }
 
@@ -16,7 +18,7 @@ checkDatadir <- function(dir=NULL) {
 ##' \code{\link{csv.read.dataset}} and
 ##' \code{\link{ijroi.read.dataset}}. The format is autodetected from
 ##' the files in the directory.
-##' 
+##'
 ##' @title Read a retinal dataset
 ##' @param dataset Path to directory containing the files
 ##'   corresponding to each format.
@@ -29,7 +31,7 @@ checkDatadir <- function(dir=NULL) {
 retistruct.read.dataset <- function(dataset, report=message, ...) {
   ## Check to see if dataset is valid
   type <- checkDatadir(dataset)
-  
+
   if (!is.function(report)) {
     if (report != FALSE) {
       stop("report must be FALSE or a function")
@@ -40,6 +42,7 @@ retistruct.read.dataset <- function(dataset, report=message, ...) {
   if (type=="idt")   { return(idt.read.dataset(dataset, report, ...))}
   if (type=="csv")   { return(csv.read.dataset(dataset, report, ...))}
   if (type=="ijroi") { return(ijroi.read.dataset(dataset, report, ...))}
+  if (type=="ijroimulti") { return(ijroimulti.read.dataset(dataset, ...))}
 
   stop("No valid dataset format detected.")
 }
@@ -76,7 +79,7 @@ retistruct.read.dataset <- function(dataset, report=message, ...) {
 ##' \item{phi0}{Angle of rim in degrees}
 ##' \item{DVflip}{Boolean variable indicating if dorsoventral (DV) axis has been flipped}
 ##' @author David Sterratt
-##' @importFrom utils read.csv 
+##' @importFrom utils read.csv
 ##' @export
 retistruct.read.markup <- function(a, error=stop) {
   ## Return index in P of closest point to x
@@ -101,9 +104,9 @@ retistruct.read.markup <- function(a, error=stop) {
   if (file.exists(Pfile)) {
     P.old <- as.matrix(read.csv(Pfile))
   } else {
-    P.old <- a$getPoints()
+    P.old <- a$getPointsXY()
   }
-  
+
   ## Read in markup file
   markupfile <- file.path(a$dataset, "markup.csv")
   if (file.exists(markupfile)) {
@@ -123,16 +126,18 @@ retistruct.read.markup <- function(a, error=stop) {
       }
     }
     if (!is.na(M[["iD"]])) {
-      M[["iD"]] <- convert.markup(M[["iD"]], P.old, a$getPoints())
+      M[["iD"]] <- convert.markup(M[["iD"]], P.old, a$getPointsXY())
       a$setFixedPoint(M[["iD"]], "Dorsal")
     }
     if (!is.na(M[["iN"]])) {
-      M[["iN"]] <- convert.markup(M[["iN"]], P.old, a$getPoints())
+      M[["iN"]] <- convert.markup(M[["iN"]], P.old, a$getPointsXY())
       a$setFixedPoint(M[["iN"]], "Nasal")
     }
     a$phi0 <- M[["phi0"]]*pi/180
     if ("iOD" %in% names(M)) {
-      a$getFeatureSet("LandmarkSet")$setID(M[["iOD"]], "OD")
+      if (!is.na(M[["iOD"]])) {
+        a$getFeatureSet("LandmarkSet")$setID(M[["iOD"]], "OD")
+      }
     }
     if ("DVflip" %in% names(M)) {
       a$DVflip <- M[["DVflip"]]
@@ -140,13 +145,13 @@ retistruct.read.markup <- function(a, error=stop) {
   } else {
     error("Markup file markup.csv doesn't exist.")
   }
-  
+
   ## Read in tearfile
   tearfile <- file.path(a$dataset, "T.csv")
   if (file.exists(tearfile)) {
     T.old <- read.csv(tearfile)
     cn <- colnames(T.old)
-    T <- matrix(convert.markup(as.matrix(T.old), P.old, a$getPoints()), ncol=3)
+    T <- matrix(convert.markup(as.matrix(T.old), P.old, a$getPointsXY()), ncol=3)
     colnames(T) <- cn
     if (nrow(T) > 0) {
       for (i in 1:nrow(T)) {
@@ -156,11 +161,26 @@ retistruct.read.markup <- function(a, error=stop) {
   } else {
     error("Tear file T.csv doesn't exist.")
   }
+  ## Read in cut file
+  cutfile <- file.path(a$dataset, "C.csv")
+  if (file.exists(cutfile)) {
+    C.old <- read.csv(cutfile)
+    cn <- colnames(C.old)
+    C <- matrix(convert.markup(C.old, P.old, a$getPointsXY()), ncol=4)
+    colnames(C) <- cn
+    for (i in 1:nrow(C)) {
+      a$addFullCut(C[i,])
+    }
+  } else {
+    if (length(a$getFragmentIDs()) > 1) {
+      warning("FullCut file C.csv doesn't exist.")
+    }
+  }
   return(a)
 }
 
 ##' Check that markup such as tears and the nasal or dorsal points are present.
-##' 
+##'
 ##' @title Retistruct check markup
 ##' @param o Outline object
 ##' @return If all markup is present, return \code{TRUE}. Otherwise
@@ -203,13 +223,13 @@ retistruct.read.recdata <- function(o, check=TRUE) {
     if (check) {
       chk <- all.equal(o, r$ol0)
       if (!isTRUE(chk)) {
-        print(chk)
+        report(chk)
         unlink(recfile)
         warning("The base data has changed since this retina was last reconstructed, so the cached reconstruction data has been deleted.")
         return(NULL)
-      } 
+      }
     }
-    
+
     ## Make sure the dataset information isn't overwritten
     ## r$dataset <- o$dataset
     return(r)
@@ -219,7 +239,7 @@ retistruct.read.recdata <- function(o, check=TRUE) {
 
 ##' Reconstruct a retina
 ##' @param a \code{\link{RetinalOutline}} object with tear and
-##'   correspondence annotations
+##'   cut annotations
 ##' @param report Function to report progress. Set to \code{FALSE} for
 ##'   no reporting or to \code{NULL} to inherit from the argument given to \code{\link{retistruct.read.dataset}}
 ##' @param plot.3d If \code{TRUE} show progress in a 3D plot
@@ -227,6 +247,8 @@ retistruct.read.recdata <- function(o, check=TRUE) {
 ##'   representation
 ##' @param dev.polar The ID of the device to which to plot the polar
 ##'   representation
+##' @param shinyOutput A Shiny output element used to render and display a
+##' plot in the application.
 ##' @param debug If \code{TRUE} print extra debugging output
 ##' @param ... Parameters to be passed to
 ##'   \code{\link{RetinalReconstructedOutline}} constructor
@@ -235,9 +257,9 @@ retistruct.read.recdata <- function(o, check=TRUE) {
 ##' @export
 retistruct.reconstruct <- function(a, report=NULL,
                                    plot.3d=FALSE, dev.flat=NA, dev.polar=NA,
-                                   debug=FALSE, ...) {
+                                   shinyOutput=NULL, debug=FALSE, ...) {
   o <- a$clone()
-  
+
   ## Check that markup is there
   if (!retistruct.check.markup(o)) {
     stop("Neither dorsal nor nasal pole specified")
@@ -249,7 +271,7 @@ retistruct.reconstruct <- function(a, report=NULL,
     stop(paste("Invalid tears", toString(ct), "marked up. Fix using \"Move Point\"."))
   }
 
-  ## Set up fixed point 
+  ## Set up fixed point
   o$lambda0 <- 0
   ## Case of dorsal point specified...
   if (names(o$i0)[1]=="Dorsal") {
@@ -269,7 +291,7 @@ retistruct.reconstruct <- function(a, report=NULL,
   r$loadOutline(o, debug=debug)
 
   r$reconstruct(plot.3d=plot.3d, dev.flat=dev.flat,
-                dev.polar=dev.polar, report=report,
+                dev.polar=dev.polar, shinyOutput=shinyOutput, report=report,
                 ...)
   if (!is.null(r)) {
     repstr <- paste("Mapping optimised. Deformation eL:", format(sqrt(r$E.l), 5),
@@ -281,7 +303,7 @@ retistruct.reconstruct <- function(a, report=NULL,
                       format(r$EOD, 2),
                       "degrees.")
     }
-    report(repstr)      
+    report(repstr)
   }
   return(r)
 }
@@ -292,15 +314,17 @@ retistruct.reconstruct <- function(a, report=NULL,
 ##' @title Save markup
 ##' @param a \code{\link{RetinalOutline}} object
 ##' @author David Sterratt
-##' @importFrom utils write.csv 
+##' @importFrom utils write.csv
 ##' @export
 retistruct.save.markup <- function(a) {
   ## Save the tear information and the outline
   write.csv(a$getTears(), file.path(a$dataset, "T.csv"),
             row.names=FALSE)
-  write.csv(a$getPoints(), file.path(a$dataset, "P.csv"),
+  write.csv(a$getFullCuts(), file.path(a$dataset, "C.csv"),
             row.names=FALSE)
-      
+  write.csv(a$getPointsXY(), file.path(a$dataset, "P.csv"),
+            row.names=FALSE)
+
   ## Save the dorsal and nasal locations and phi0 to markup.csv
   i0 <- a$getFixedPoint()
   iD <- ifelse(names(i0) == "Dorsal", i0, NA)
@@ -309,7 +333,7 @@ retistruct.save.markup <- function(a) {
   iOD <- a$getFeatureSet("LandmarkSet")$getIndex("OD")
   if (length(iOD) == 0)
     iOD <- NA
-  markup <- data.frame(iD=iD, iN=iN, phi0=a$phi0*180/pi, iOD=iOD, DVflip=a$DVflip, side=a$side)     
+  markup <- data.frame(iD=iD, iN=iN, phi0=a$phi0*180/pi, iOD=iOD, DVflip=a$DVflip, side=a$side)
   write.csv(markup, file.path(a$dataset, "markup.csv"), row.names=FALSE)
 }
 
@@ -360,8 +384,6 @@ retistruct.export.matlab <- function(r, filename=NULL) {
         KDE[[i]] <- c(KDE[[i]], KDEi)
         names(KDE[[i]]$contour.areas) <- c()
       }
-      ## print(names(KDE))
-      ## print(names(unlist(KDE, recursive=FALSE)))
       KDE <- unlist(KDE, recursive=FALSE)
       names(KDE) <- gsub('\\.', '_', names(KDE))
     }
@@ -397,4 +419,3 @@ retistruct.export.matlab <- function(r, filename=NULL) {
                        )
   }
 }
-
