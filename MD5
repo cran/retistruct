@@ -1,6 +1,6 @@
-b96a39ab46635e08387ecf99eb50eee5 *DESCRIPTION
+8ae1c54b19e417524abd54d1a4c77167 *DESCRIPTION
 cb51e6db4463ea303eca2ff159d433a8 *NAMESPACE
-00c577b35efd566c8a2f6f66f631b204 *NEWS
+303336ef43fdd9e049dc092ff74b066c *NEWS
 775446dd4e751f92e835185ba5ba01af *R/AnnotatedOutline.R
 7f15c1f5bdc4fc5e9a57b3c6f257da9b *R/CountSet.R
 0fca0603fa14db581f6cbaf0e8bd8357 *R/FeatureSet.R
@@ -14,14 +14,14 @@ ba5bce90450129243a5dc4c20e538844 *R/Fragment.R
 059675263aa92ad40379b575d7020545 *R/ReconstructedCountSet.R
 8b2479733728d927d221c61837351c25 *R/ReconstructedFeatureSet.R
 c5ee0ed3baa28c4992f53f53651ffed4 *R/ReconstructedLandmarkSet.R
-86ac01945d0debc74f0112683567fc12 *R/ReconstructedOutline.R
+f37eafea166aed655863d4d34502364b *R/ReconstructedOutline.R
 379da46918c666896c1ff1571e67d7f4 *R/ReconstructedPointSet.R
 a9f5670310c6b941f6db314b4485cdac *R/RetinalOutline.R
 3564b38d688f49f0dc5077038a167b77 *R/RetinalReconstructedOutline.R
 8b2db0dcd84438ecd9a9ae970bb39841 *R/StitchedOutline.R
 8d2595bba9f7b905fe56e9b4161ba046 *R/TriangulatedFragment.R
 0a29e51e7c2274c4e0db0f39fd69fdaa *R/TriangulatedOutline.R
-5964160f8615f3e41332daefaf22db96 *R/app.R
+4e922cc1b4fef952d457a007651bedce *R/app.R
 9202f3058cc259a01b7de2dedd723e8b *R/bary2sph.R
 1f6284f0a05dc48646ea0068c2daa0b9 *R/create-tests.R
 c33c0dd6c8accc27f93920a3f9b98ba4 *R/fire.R
@@ -41,11 +41,11 @@ a7046bc64b1defb1b53d21787b707f72 *R/r6-serialize.R
 d42c577062f4689e22a1ae6c3501cb0d *R/retistruct-batch.R
 deb48821f51737f32ad85a548aeec2ab *R/retistruct-cli.R
 06a021f84259883d079ece71ace7e649 *R/retistruct.R
-019b184635f9215d7cb50a5ffc236870 *R/server-handlers.R
-43a86aa3f865de2a32ef43731487b5c1 *R/server.R
+c091537045d672b1b47061843dbbef8c *R/server-handlers.R
+ba7c0447933f4a6b79da39404c712bbc *R/server.R
 8dfc28aa6650434e47196a6683c3698a *R/spheristruct.R
 17c1b3ebbc1f39b5303b4c40b432522d *R/transformations.R
-d12c43786f18c836f7762418ca9101c1 *R/ui.R
+bf16103a1a1bb3a57a8a136b7e131c84 *R/ui.R
 37134059c60095aff46911ab8c442c1e *R/zzz.R
 fb2349079236b6ee66c333908a628a5f *README.md
 d6e4894c4fedaab6895955f07f9790fb *demo/00Index
@@ -193,7 +193,7 @@ f9d5b45cabd4262dea02939a00315dbe *man/circle.Rd
 d1700a483a36c326448faba970f4fa3e *man/csv.read.dataset.Rd
 bcb79a61afe3932dd1f5326e4f94366c *man/dE.Rd
 08e4b07fb10a6c59d6b1b24aa14500da *man/depthplot3D.Rd
-759c4bf118345b74a794ad778e0e8315 *man/directories.Rd
+7804a25cee133964217665ca72cffd5c *man/directories.Rd
 385e3235f5b1d962cf867691e3ecf3bd *man/f.Rd
 6f8f5c48f5975c2c39834b513c4bd5b1 *man/fire.Rd
 d5fc223b6305d038ca20d7519b20f797 *man/flatplot.AnnotatedOutline.Rd
@@ -280,7 +280,7 @@ b2f286fdfb89da443c6ba352fde759ff *man/spherical.to.polar.area.Rd
 df86bb379fe1d78fad3d05d05349baf7 *man/stretchMesh.Rd
 8e88d85f3faaeff4c2f276e1bbf59a54 *man/tri.area.Rd
 af31b89384ca4429dbddea1fad79fc36 *man/tri.area.signed.Rd
-f9fbbc960d522b9d9db55ac95d719ee9 *man/ui.Rd
+4cfc7a595315642b22090ba997f4e5d9 *man/ui.Rd
 1fdfc4f130e3d5ea459cd3876131200f *man/vecnorm.Rd
 89966b8952eb4a72bcda2bb44e94c296 *src/bary2sph.c
 c05998a3e18603e8d4937edf783987df *src/energy.c
@@ -303,6 +303,6 @@ bb1c748f19313d41095c332c51079b50 *tests/testthat/test-path-outline.R
 8a7e1a75bad4bbd9a74a46882a1505ec *tests/testthat/test-reconstruct.R
 a4816069712ee913007973cafdb8f534 *tests/testthat/test-reconstructed-outline.R
 c684b95b2e549e1b930237ba069f1b13 *tests/testthat/test-regressions.R
-83ba47c27f3198be0b06e1972e59841d *tests/testthat/test-stitched-outline.R
+226e0b30171936ddda0fbc0259c6e25a *tests/testthat/test-stitched-outline.R
 0f2af5715a29b28bab117d7a62fd2e69 *tests/testthat/test-triangulated-outline.R
 41bc9fd777af621e7f3e2e30a236c909 *tests/testthat/test-wedge.R
